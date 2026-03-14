@@ -63,6 +63,7 @@ Este repo no deberia ser el hogar principal de:
 Durante la migracion, `javi-dots` consume a los repos hermanos por contratos publicados, no por paths internos.
 
 - `modules/ai/module.yaml` mapea elecciones de bootstrap a provider IDs, package IDs y target IDs publicados por `javi-ai`.
+- `scripts/bootstrap/apply-ai.sh` es el wrapper consumidor para el flujo AI del bootstrap y delega solo al entrypoint publico `javi-ai/scripts/install-profiles.sh`.
 - `modules/forge/module.yaml` mapea exposiciones opcionales de project bootstrap a template IDs publicados por `javi-forge`.
 - `javi-dots` puede leer manifests y entrypoints declarados por esos repos, pero no debe inferir comportamiento desde `packages/`, `templates/`, `scripts/` u otros directorios internos hermanos.
 - Mientras dure esta etapa, la documentacion y los modulos consumidores deben preservar ese boundary y evitar reintroducir acoplamiento al layout legacy o al layout interno de `javi-ai` y `javi-forge`.
@@ -89,9 +90,17 @@ scripts/bootstrap/apply.sh --dry-run
 scripts/bootstrap/apply.sh --home "$HOME"
 ```
 
+Bootstrap AI del slice migrado:
+
+```bash
+scripts/bootstrap/apply-ai.sh --list-choices
+scripts/bootstrap/apply-ai.sh --choice ai.claude.user --dry-run
+```
+
 Documentacion canonica del slice:
 
 - `docs/bootstrap-entrypoint.md`
+- `docs/ai-bootstrap-entrypoint.md`
 
 ## Current State
 

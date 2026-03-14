@@ -54,12 +54,16 @@ module_slots:
 consumer_contracts:
   ai:
     module_manifest: modules/ai/module.yaml
+    bootstrap_entrypoint: scripts/bootstrap/apply-ai.sh
     install_entrypoint: ../javi-ai/scripts/install-profiles.sh
     install_rule:
+      - bootstrap AI requests route through the local consumer wrapper first
       - use published provider, package, and target IDs only
+      - do not consult legacy AI installer docs or fallback behavior for migrated flows
       - never infer runtime behavior from javi-ai internal layout
   forge:
     module_manifest: modules/forge/module.yaml
 notes:
   - WI-014 extracts the first bounded bootstrap slice into the canonical slots above
   - the extracted installer remains local to javi-dots and does not consume javi-ai internals
+  - WI-026 cuts bootstrap AI consumption over to the published javi-ai install surface

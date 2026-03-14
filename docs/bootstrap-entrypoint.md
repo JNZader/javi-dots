@@ -49,6 +49,7 @@ The script is intentionally non-destructive for this slice: existing files are s
 
 - `javi-dots` owns workstation/bootstrap behavior for this extracted slice.
 - `javi-ai` integration stays behind `modules/ai/module.yaml` plus the published `javi-ai` manifests and install entrypoint.
+- AI bootstrap for the migrated flow is started from `scripts/bootstrap/apply-ai.sh` and documented in `docs/ai-bootstrap-entrypoint.md`.
 - `javi-dots` must not recover behavior by reading `javi-ai` internal package or provider directories.
 - `javi-forge` remains outside this slice except for the optional consumer mapping in `modules/forge/module.yaml`.
 

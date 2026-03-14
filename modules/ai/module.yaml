@@ -1,10 +1,11 @@
 kind: ai-consumer-module
 contract_version: 0.1.0
-status: scaffold
+status: cutover-complete
 module:
   id: ai
   owner_repo: javi-dots
   purpose: map bootstrap AI choices to published javi-ai contract IDs
+  bootstrap_entrypoint: scripts/bootstrap/apply-ai.sh
 source_contracts:
   provider_catalog:
     owner_repo: javi-ai
@@ -16,7 +17,9 @@ source_contracts:
     owner_repo: javi-ai
     surface: manifests/targets.yaml
 selection_rules:
+  - start AI bootstrap from the local consumer wrapper entrypoint
   - consume published provider, package, and target IDs only
+  - migrated bootstrap flows do not fallback to legacy AI installer notes or scripts
   - do not infer behavior from javi-ai internal directories
   - shared package composition stays owned by javi-ai manifests
 provider_choices:
@@ -60,3 +63,11 @@ bootstrap_presets:
       - ai.qwen.user
       - ai.codex.user
       - ai.copilot.repo
+cutover_notes:
+  legacy_crossing: legacy.bootstrap.ai-validation
+  canonical_bootstrap_doc: docs/ai-bootstrap-entrypoint.md
+  public_install_surface: ../javi-ai/scripts/install-profiles.sh
+  verification_expectations:
+    - local bootstrap flow resolves one published provider choice at a time
+    - wrapper delegates to the public javi-ai install entrypoint only
+    - no migrated bootstrap flow relies on vault/Javi.Dots AI setup behavior
