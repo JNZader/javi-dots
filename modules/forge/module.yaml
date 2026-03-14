@@ -1,10 +1,11 @@
 kind: forge-consumer-module
 contract_version: 0.1.0
-status: scaffold
+status: cutover-complete
 module:
   id: forge
   owner_repo: javi-dots
   purpose: map optional project bootstrap choices to published javi-forge contract IDs
+  bootstrap_entrypoint: scripts/bootstrap/apply-forge.sh
 source_contracts:
   catalog_manifest:
     owner_repo: javi-forge
@@ -31,7 +32,10 @@ catalog_bindings:
     - choice_id: forge.template.docs.base
       template_id: template.docs.base
       bootstrap_exposure: optional
-  generators: []
+  generators:
+    - choice_id: forge.generator.review.automation
+      generator_id: generator.review.automation
+      bootstrap_exposure: optional
 optional_bootstrap_exposures:
   - exposure_id: forge-project-init
     description: expose forge project initialization as an optional bootstrap capability
@@ -40,7 +44,15 @@ optional_bootstrap_exposures:
       - forge.template.api.base
       - forge.template.fullstack.base
       - forge.template.docs.base
-    generator_choices: []
+    generator_choices:
+      - forge.generator.review.automation
+cutover_notes:
+  canonical_bootstrap_doc: docs/quickstart.md
+  public_forge_surface: ../javi-forge/scripts/forge-init.sh
+  verification_expectations:
+    - local bootstrap flow resolves one published forge choice at a time
+    - wrapper delegates to the public javi-forge entrypoint only
+    - no forge template or generator internal layout is assumed by javi-dots
 notes:
-  - generator choices stay empty until javi-forge publishes stable generator IDs in the catalog contract
+  - forge-slice-expansion implemented all four template IDs and generator.review.automation in javi-forge
   - this module does not migrate templates or redefine forge implementation ownership
