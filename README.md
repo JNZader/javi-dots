@@ -6,6 +6,8 @@ Bootstrap opinionado para preparar una maquina de desarrollo desde cero.
 
 `javi-dots` es el entrypoint de workstation/bootstrap del ecosistema. Define perfiles, modulos y scripts de setup sin absorber la capa avanzada de IA ni el scaffolding de proyectos.
 
+Para el slice ya extraido en Wave 4, este repo tambien es el entrypoint canonico de bootstrap: la forma soportada de aplicar `fish`, `ghostty` y `zed` para el perfil base vive aca, no en `vault/Javi.Dots`.
+
 ## Starter Layout
 
 ```text
@@ -71,15 +73,34 @@ Referencias de gobierno para esta regla:
 - `../javi-platform/docs/ecosystem/ECOSYSTEM-MAP.md`
 - `../javi-platform/docs/migration/CANONICAL-VS-MIRROR-GUIDE.md`
 
+## Canonical Bootstrap Slice
+
+El slice bootstrap ya extraido se aplica desde `scripts/bootstrap/apply.sh` y compone:
+
+- `profiles/base/profile.yaml`
+- `modules/shell/fish/module.yaml`
+- `modules/terminal/ghostty/module.yaml`
+- `modules/editor/zed/module.yaml`
+
+Uso rapido:
+
+```bash
+scripts/bootstrap/apply.sh --dry-run
+scripts/bootstrap/apply.sh --home "$HOME"
+```
+
+Documentacion canonica del slice:
+
+- `docs/bootstrap-entrypoint.md`
+
 ## Current State
 
-Skeleton minimo creado para el split del ecosistema.
-
-La estructura inicial de Wave 4 ya reserva los primeros slots canonicos para:
+Wave 4 ya tiene un primer slice bootstrap extraido y canonico en `javi-dots` para:
 
 - installer/bootstrap skeleton
 - shell module (`fish`)
 - terminal module (`ghostty`)
 - editor module (`zed`)
 
-Todavia no se migran assets legacy; esta wave solo prepara la estructura y composicion local para la extraccion posterior.
+Todavia quedan assets bootstrap fuera de este slice en `vault/Javi.Dots`, pero para estos modulos las nuevas ediciones y la documentacion activa deben vivir en `javi-dots`.
+Las docs legacy quedan como referencia/mirror hasta waves posteriores y no son el entrypoint recomendado para el slice ya migrado.
