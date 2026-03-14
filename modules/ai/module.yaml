@@ -1,0 +1,62 @@
+kind: ai-consumer-module
+contract_version: 0.1.0
+status: scaffold
+module:
+  id: ai
+  owner_repo: javi-dots
+  purpose: map bootstrap AI choices to published javi-ai contract IDs
+source_contracts:
+  provider_catalog:
+    owner_repo: javi-ai
+    surface: manifests/providers.yaml
+  package_catalog:
+    owner_repo: javi-ai
+    surface: manifests/packages.yaml
+  target_catalog:
+    owner_repo: javi-ai
+    surface: manifests/targets.yaml
+selection_rules:
+  - consume published provider, package, and target IDs only
+  - do not infer behavior from javi-ai internal directories
+  - shared package composition stays owned by javi-ai manifests
+provider_choices:
+  - choice_id: ai.claude.user
+    provider_id: claude
+    package_ids:
+      - provider.claude.core
+    target_id: target.claude.user
+  - choice_id: ai.opencode.user
+    provider_id: opencode
+    package_ids:
+      - provider.opencode.core
+    target_id: target.opencode.user
+  - choice_id: ai.gemini.user
+    provider_id: gemini
+    package_ids:
+      - provider.gemini.core
+    target_id: target.gemini.user
+  - choice_id: ai.qwen.user
+    provider_id: qwen
+    package_ids:
+      - provider.qwen.core
+    target_id: target.qwen.user
+  - choice_id: ai.codex.user
+    provider_id: codex
+    package_ids:
+      - provider.codex.core
+    target_id: target.codex.user
+  - choice_id: ai.copilot.repo
+    provider_id: copilot
+    package_ids:
+      - provider.copilot.core
+    target_id: target.copilot.repo
+bootstrap_presets:
+  - preset_id: ai-minimal
+    description: keep AI bootstrap optional and select one published provider choice
+    available_choices:
+      - ai.claude.user
+      - ai.opencode.user
+      - ai.gemini.user
+      - ai.qwen.user
+      - ai.codex.user
+      - ai.copilot.repo
