@@ -8,6 +8,33 @@ Bootstrap opinionado para preparar una maquina de desarrollo desde cero.
 
 Para el slice ya extraido en Wave 4, este repo tambien es el entrypoint canonico de bootstrap: la forma soportada de aplicar `fish`, `ghostty` y `zed` para el perfil base vive aca, no en `vault/Javi.Dots`.
 
+## Quick Start
+
+```sh
+# Preview what will change before touching anything
+scripts/javi.sh --preset base --dry-run --home "$HOME"
+
+# Apply base workstation (fish + ghostty + zed)
+scripts/javi.sh --preset base --home "$HOME"
+
+# Apply base + Claude Code
+scripts/javi.sh --preset ai-core --ai-choice ai.claude.user --home "$HOME"
+
+# Apply everything: base + AI + web project scaffold
+scripts/javi.sh --preset full \
+  --ai-choice ai.claude.user \
+  --template-choice forge.template.web.base \
+  --project-name my-app \
+  --home "$HOME"
+
+# See all presets, AI choices, and forge choices
+scripts/javi.sh --list-presets
+scripts/bootstrap/apply-ai.sh --list-choices
+scripts/bootstrap/apply-forge.sh --list-choices
+```
+
+See `docs/quickstart.md` for a step-by-step first-time setup guide.
+
 ## Starter Layout
 
 ```text
@@ -23,8 +50,16 @@ javi-dots/
 │   ├── forge/
 │   ├── shell/
 │   └── terminal/
-└── scripts/
-    └── bootstrap/
+├── scripts/
+│   ├── javi.sh               ← unified bootstrap orchestrator
+│   └── bootstrap/
+│       ├── apply.sh           ← workstation slice
+│       ├── apply-ai.sh        ← AI consumer wrapper
+│       └── apply-forge.sh     ← forge consumer wrapper
+└── docs/
+    ├── quickstart.md
+    ├── bootstrap-entrypoint.md
+    └── ai-bootstrap-entrypoint.md
 ```
 
 ## Directory Intent
@@ -76,40 +111,39 @@ Referencias de gobierno para esta regla:
 
 ## Canonical Bootstrap Slice
 
-El slice bootstrap ya extraido se aplica desde `scripts/bootstrap/apply.sh` y compone:
+El slice bootstrap extraido se orquesta desde `scripts/javi.sh` y compone:
 
 - `profiles/base/profile.yaml`
 - `modules/shell/fish/module.yaml`
 - `modules/terminal/ghostty/module.yaml`
 - `modules/editor/zed/module.yaml`
 
-Uso rapido:
+Los scripts atomicos tambien siguen disponibles de forma independiente:
 
 ```bash
-scripts/bootstrap/apply.sh --dry-run
+# Entrypoint unificado (recomendado)
+scripts/javi.sh --preset base --home "$HOME"
+
+# Scripts atomicos (uso directo)
 scripts/bootstrap/apply.sh --home "$HOME"
+scripts/bootstrap/apply-ai.sh --choice ai.claude.user
+scripts/bootstrap/apply-forge.sh --template-choice forge.template.web.base --project-name my-app
 ```
 
-Bootstrap AI del slice migrado:
+Documentacion canonica:
 
-```bash
-scripts/bootstrap/apply-ai.sh --list-choices
-scripts/bootstrap/apply-ai.sh --choice ai.claude.user --dry-run
-```
-
-Documentacion canonica del slice:
-
-- `docs/bootstrap-entrypoint.md`
-- `docs/ai-bootstrap-entrypoint.md`
+- `docs/quickstart.md` — guia de primera vez (recomendada)
+- `docs/bootstrap-entrypoint.md` — detalles del slice workstation
+- `docs/ai-bootstrap-entrypoint.md` — contrato AI bootstrap
 
 ## Current State
 
-Wave 4 ya tiene un primer slice bootstrap extraido y canonico en `javi-dots` para:
+El milestone `dots-bootstrap-orchestration` convierte `javi-dots` en la capa de orquestacion limpia sobre los contratos estables de `javi-ai` y `javi-forge`.
 
-- installer/bootstrap skeleton
-- shell module (`fish`)
-- terminal module (`ghostty`)
-- editor module (`zed`)
+- `scripts/javi.sh` — entrypoint unificado con presets (`base`, `ai-core`, `ai-full`, `forge`, `full`)
+- `scripts/bootstrap/apply-forge.sh` — wrapper consumidor de forge (analogous to apply-ai.sh)
+- `modules/forge/module.yaml` — estado cutover-complete con bindings de generadores
+- `docs/quickstart.md` — guia de primera vez
 
-Todavia quedan assets bootstrap fuera de este slice en `vault/Javi.Dots`, pero para estos modulos las nuevas ediciones y la documentacion activa deben vivir en `javi-dots`.
-Las docs legacy quedan como referencia/mirror hasta waves posteriores y no son el entrypoint recomendado para el slice ya migrado.
+Los assets del slice ya migrado (fish, ghostty, zed) permanecen canonicos en `javi-dots`.
+Las docs legacy en `vault/Javi.Dots` quedan como referencia/mirror solamente.
