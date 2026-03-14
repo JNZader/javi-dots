@@ -1,0 +1,46 @@
+kind: forge-consumer-module
+contract_version: 0.1.0
+status: scaffold
+module:
+  id: forge
+  owner_repo: javi-dots
+  purpose: map optional project bootstrap choices to published javi-forge contract IDs
+source_contracts:
+  catalog_manifest:
+    owner_repo: javi-forge
+    surface: docs/contracts/catalog.yaml
+  stable_entrypoint:
+    owner_repo: javi-forge
+    surface: scripts/init-project.*
+    status: planned
+selection_rules:
+  - consume published template and generator IDs only
+  - do not infer behavior from javi-forge internal templates, scripts, or ci layout
+  - optional project bootstrap exposure stays a consumer wrapper, not forge ownership
+catalog_bindings:
+  templates:
+    - choice_id: forge.template.web.base
+      template_id: template.web.base
+      bootstrap_exposure: optional
+    - choice_id: forge.template.api.base
+      template_id: template.api.base
+      bootstrap_exposure: optional
+    - choice_id: forge.template.fullstack.base
+      template_id: template.fullstack.base
+      bootstrap_exposure: optional
+    - choice_id: forge.template.docs.base
+      template_id: template.docs.base
+      bootstrap_exposure: optional
+  generators: []
+optional_bootstrap_exposures:
+  - exposure_id: forge-project-init
+    description: expose forge project initialization as an optional bootstrap capability
+    template_choices:
+      - forge.template.web.base
+      - forge.template.api.base
+      - forge.template.fullstack.base
+      - forge.template.docs.base
+    generator_choices: []
+notes:
+  - generator choices stay empty until javi-forge publishes stable generator IDs in the catalog contract
+  - this module does not migrate templates or redefine forge implementation ownership
