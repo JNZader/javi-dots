@@ -11,8 +11,8 @@ source_contracts:
     surface: docs/contracts/catalog.yaml
   stable_entrypoint:
     owner_repo: javi-forge
-    surface: scripts/init-project.*
-    status: planned
+    surface: scripts/forge-init.sh
+    status: cutover-complete
 selection_rules:
   - consume published template and generator IDs only
   - do not infer behavior from javi-forge internal templates, scripts, or ci layout
