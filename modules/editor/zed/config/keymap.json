@@ -1,0 +1,43 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == normal",
+    "bindings": {
+      "space f f": "file_finder::Toggle",
+      "space f g": "workspace::NewSearch",
+      "space e": "workspace::ToggleLeftDock",
+      "space b d": "pane::CloseActiveItem",
+      "space b n": "pane::ActivateNextItem",
+      "space b p": "pane::ActivatePrevItem",
+      "space /": "editor::ToggleComments",
+      "space w": "workspace::Save",
+      "space q": "pane::CloseActiveItem",
+      "g d": "editor::GoToDefinition",
+      "g r": "editor::FindAllReferences",
+      "g i": "editor::GoToImplementation",
+      "K": "editor::Hover",
+      "space c a": "editor::ToggleCodeActions",
+      "space r n": "editor::Rename",
+      "[ d": "editor::GoToPrevDiagnostic",
+      "] d": "editor::GoToNextDiagnostic",
+      "space s v": "pane::SplitRight",
+      "space s h": "pane::SplitDown"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == visual",
+    "bindings": {
+      "space /": "editor::ToggleComments",
+      "J": "editor::MoveLineDown",
+      "K": "editor::MoveLineUp"
+    }
+  }
+]

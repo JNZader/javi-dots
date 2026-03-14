@@ -1,10 +1,11 @@
 kind: bootstrap-profile
 contract_version: 0.1.0
-status: scaffold
+status: extracted-slice
 profile:
   id: base
   owner_repo: javi-dots
   purpose: minimal workstation composition for the first bootstrap extraction slice
+  install_entrypoint: scripts/bootstrap/apply.sh
 module_refs:
   - modules/bootstrap/module.yaml
   - modules/shell/fish/module.yaml

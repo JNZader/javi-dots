@@ -1,6 +1,6 @@
 kind: bootstrap-module
 contract_version: 0.1.0
-status: scaffold
+status: extracted-slice
 module:
   id: terminal.ghostty
   owner_repo: javi-dots
@@ -8,10 +8,17 @@ module:
   purpose: canonical slot for the ghostty terminal bootstrap module
 asset_roots:
   - modules/terminal/ghostty/config/
+extracted_assets:
+  - modules/terminal/ghostty/config/config
+  - modules/terminal/ghostty/config/shaders/cursor_smear_gentleman.glsl
 lineage:
   preferred_base: Gentleman.Dots
   legacy_delta:
     - vault/Javi.Dots/GentlemanGhostty/
+coexistence:
+  canonical_owner: javi-dots
+  legacy_source: vault/Javi.Dots/GentlemanGhostty/
+  retirement_condition: replace remaining ghostty themes and extra shaders in later bootstrap slices
 selection_rules:
   - keep terminal ownership inside javi-dots
   - terminal assets remain bootstrap concerns, not javi-ai packages

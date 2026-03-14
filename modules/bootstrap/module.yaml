@@ -1,6 +1,6 @@
 kind: bootstrap-module-group
 contract_version: 0.1.0
-status: scaffold
+status: extracted-slice
 group:
   id: bootstrap.core
   owner_repo: javi-dots
@@ -12,29 +12,41 @@ structure_rules:
   - no module in this group may read javi-ai internal packages or provider directories
 module_slots:
   - slot_id: installer.cli
-    readiness: scaffold
+    readiness: extracted-slice
     entrypoint: scripts/bootstrap/apply.sh
+    extracted_assets:
+      - scripts/bootstrap/apply.sh
     lineage:
       preferred_base: Gentleman.Dots
       legacy_delta:
         - vault/Javi.Dots/installer/
   - slot_id: shell.fish
-    readiness: scaffold
+    readiness: extracted-slice
     module_manifest: modules/shell/fish/module.yaml
+    extracted_assets:
+      - modules/shell/fish/config/config.fish
+      - modules/shell/fish/config/conf.d/nvm.fish
+      - modules/shell/fish/config/fish_plugins
     lineage:
       preferred_base: Gentleman.Dots
       legacy_delta:
         - vault/Javi.Dots/GentlemanFish/
   - slot_id: terminal.ghostty
-    readiness: scaffold
+    readiness: extracted-slice
     module_manifest: modules/terminal/ghostty/module.yaml
+    extracted_assets:
+      - modules/terminal/ghostty/config/config
+      - modules/terminal/ghostty/config/shaders/cursor_smear_gentleman.glsl
     lineage:
       preferred_base: Gentleman.Dots
       legacy_delta:
         - vault/Javi.Dots/GentlemanGhostty/
   - slot_id: editor.zed
-    readiness: scaffold
+    readiness: extracted-slice
     module_manifest: modules/editor/zed/module.yaml
+    extracted_assets:
+      - modules/editor/zed/config/settings.json
+      - modules/editor/zed/config/keymap.json
     lineage:
       preferred_base: Gentleman.Dots
       legacy_delta:
@@ -49,5 +61,5 @@ consumer_contracts:
   forge:
     module_manifest: modules/forge/module.yaml
 notes:
-  - this work item prepares canonical module slots only
-  - extraction of actual installer or config assets belongs to later work items
+  - WI-014 extracts the first bounded bootstrap slice into the canonical slots above
+  - the extracted installer remains local to javi-dots and does not consume javi-ai internals
