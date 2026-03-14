@@ -1,0 +1,53 @@
+kind: bootstrap-module-group
+contract_version: 0.1.0
+status: scaffold
+group:
+  id: bootstrap.core
+  owner_repo: javi-dots
+  purpose: host the first extracted workstation/bootstrap slices behind the javi-dots boundary
+structure_rules:
+  - bootstrap modules stay canonical in javi-dots
+  - AI integration uses only modules/ai/module.yaml and javi-ai public contracts
+  - forge exposure uses only modules/forge/module.yaml and javi-forge public contracts
+  - no module in this group may read javi-ai internal packages or provider directories
+module_slots:
+  - slot_id: installer.cli
+    readiness: scaffold
+    entrypoint: scripts/bootstrap/apply.sh
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/installer/
+  - slot_id: shell.fish
+    readiness: scaffold
+    module_manifest: modules/shell/fish/module.yaml
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanFish/
+  - slot_id: terminal.ghostty
+    readiness: scaffold
+    module_manifest: modules/terminal/ghostty/module.yaml
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanGhostty/
+  - slot_id: editor.zed
+    readiness: scaffold
+    module_manifest: modules/editor/zed/module.yaml
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanZed/
+consumer_contracts:
+  ai:
+    module_manifest: modules/ai/module.yaml
+    install_entrypoint: ../javi-ai/scripts/install-profiles.sh
+    install_rule:
+      - use published provider, package, and target IDs only
+      - never infer runtime behavior from javi-ai internal layout
+  forge:
+    module_manifest: modules/forge/module.yaml
+notes:
+  - this work item prepares canonical module slots only
+  - extraction of actual installer or config assets belongs to later work items

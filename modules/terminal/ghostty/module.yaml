@@ -1,0 +1,17 @@
+kind: bootstrap-module
+contract_version: 0.1.0
+status: scaffold
+module:
+  id: terminal.ghostty
+  owner_repo: javi-dots
+  category: terminal
+  purpose: canonical slot for the ghostty terminal bootstrap module
+asset_roots:
+  - modules/terminal/ghostty/config/
+lineage:
+  preferred_base: Gentleman.Dots
+  legacy_delta:
+    - vault/Javi.Dots/GentlemanGhostty/
+selection_rules:
+  - keep terminal ownership inside javi-dots
+  - terminal assets remain bootstrap concerns, not javi-ai packages

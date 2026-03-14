@@ -13,8 +13,16 @@ javi-dots/
 ├── README.md
 ├── .gitignore
 ├── profiles/
+│   └── base/
 ├── modules/
+│   ├── ai/
+│   ├── bootstrap/
+│   ├── editor/
+│   ├── forge/
+│   ├── shell/
+│   └── terminal/
 └── scripts/
+    └── bootstrap/
 ```
 
 ## Directory Intent
@@ -22,6 +30,9 @@ javi-dots/
 - `profiles/`: composiciones por contexto o tipo de maquina (`personal`, `work`, `minimal`, `ai-heavy`).
 - `modules/`: unidades reutilizables de bootstrap para shell, terminal, editor, prompt y tooling base.
 - `scripts/`: entrypoints de instalacion, sync y helpers livianos del bootstrap.
+- `modules/bootstrap/`: registro del slice inicial de extraccion para installer, shell, terminal y editor.
+- `modules/shell/`, `modules/terminal/`, `modules/editor/`: slots canonicos donde se alojan los primeros modulos extraidos.
+- `scripts/bootstrap/`: skeleton de entrypoints locales de bootstrap sin acoplarse a internals de IA.
 
 ## Boundaries
 
@@ -62,4 +73,13 @@ Referencias de gobierno para esta regla:
 
 ## Current State
 
-Skeleton minimo creado para el split del ecosistema. No migra codigo legacy todavia.
+Skeleton minimo creado para el split del ecosistema.
+
+La estructura inicial de Wave 4 ya reserva los primeros slots canonicos para:
+
+- installer/bootstrap skeleton
+- shell module (`fish`)
+- terminal module (`ghostty`)
+- editor module (`zed`)
+
+Todavia no se migran assets legacy; esta wave solo prepara la estructura y composicion local para la extraccion posterior.

@@ -1,0 +1,17 @@
+kind: bootstrap-module
+contract_version: 0.1.0
+status: scaffold
+module:
+  id: editor.zed
+  owner_repo: javi-dots
+  category: editor
+  purpose: canonical slot for the zed editor bootstrap module
+asset_roots:
+  - modules/editor/zed/config/
+lineage:
+  preferred_base: Gentleman.Dots
+  legacy_delta:
+    - vault/Javi.Dots/GentlemanZed/
+selection_rules:
+  - keep editor ownership inside javi-dots
+  - editor defaults may opt into AI contracts, but not by reading javi-ai internals

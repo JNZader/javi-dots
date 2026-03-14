@@ -1,0 +1,18 @@
+kind: bootstrap-module
+contract_version: 0.1.0
+status: scaffold
+module:
+  id: shell.fish
+  owner_repo: javi-dots
+  category: shell
+  purpose: canonical slot for the fish shell bootstrap module
+asset_roots:
+  - modules/shell/fish/config/
+lineage:
+  preferred_base: Gentleman.Dots
+  legacy_delta:
+    - vault/Javi.Dots/GentlemanFish/
+selection_rules:
+  - keep shell ownership inside javi-dots
+  - do not embed AI provider-specific behavior in this module
+  - consume AI capabilities only through the ai consumer module when needed
