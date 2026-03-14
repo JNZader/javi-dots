@@ -45,6 +45,21 @@ Este repo no deberia ser el hogar principal de:
 - `../vault/Javi.Dots`: referencia legacy para rescatar decisiones, no origen activo.
 - `../docs/adr/ADR-0001-repo-boundaries.md`: boundary source of truth.
 
+## Consumer Contract Guidance
+
+Durante la migracion, `javi-dots` consume a los repos hermanos por contratos publicados, no por paths internos.
+
+- `modules/ai/module.yaml` mapea elecciones de bootstrap a provider IDs, package IDs y target IDs publicados por `javi-ai`.
+- `modules/forge/module.yaml` mapea exposiciones opcionales de project bootstrap a template IDs publicados por `javi-forge`.
+- `javi-dots` puede leer manifests y entrypoints declarados por esos repos, pero no debe inferir comportamiento desde `packages/`, `templates/`, `scripts/` u otros directorios internos hermanos.
+- Mientras dure esta etapa, la documentacion y los modulos consumidores deben preservar ese boundary y evitar reintroducir acoplamiento al layout legacy o al layout interno de `javi-ai` y `javi-forge`.
+
+Referencias de gobierno para esta regla:
+
+- `../javi-platform/docs/contracts/CONTRACT-INDEX.md`
+- `../javi-platform/docs/ecosystem/ECOSYSTEM-MAP.md`
+- `../javi-platform/docs/migration/CANONICAL-VS-MIRROR-GUIDE.md`
+
 ## Current State
 
 Skeleton minimo creado para el split del ecosistema. No migra codigo legacy todavia.
