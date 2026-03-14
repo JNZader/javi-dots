@@ -172,7 +172,7 @@ printf 'entrypoint: %s\n' 'javi-dots/scripts/bootstrap/apply-forge.sh'
 printf 'delegates_to: %s\n' 'javi-forge/scripts/forge-init.sh'
 
 # Build the forge-init.sh invocation
-set -- sh "$FORGE_ENTRYPOINT" \
+set -- bash "$FORGE_ENTRYPOINT" \
     --project-name "$PROJECT_NAME" \
     --contract-version "$CONTRACT_VERSION"
 
