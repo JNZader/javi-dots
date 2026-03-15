@@ -1,0 +1,76 @@
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import fs from 'fs'
+import path from 'path'
+import type { DoctorCheck, Manifest } from '../types/index.js'
+import { MANIFEST_DIR, MANIFEST_PATH } from '../constants.js'
+
+const execFileAsync = promisify(execFile)
+
+async function which(bin: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync('which', [bin])
+    return stdout.trim() || null
+  } catch {
+    return null
+  }
+}
+
+export async function runDoctor(): Promise<{
+  manifest: Manifest | null
+  checks: DoctorCheck[]
+}> {
+  const checks: DoctorCheck[] = []
+
+  // Check manifest
+  let manifest: Manifest | null = null
+  try {
+    const raw = fs.readFileSync(MANIFEST_PATH, 'utf-8')
+    manifest = JSON.parse(raw)
+    checks.push({ name: 'javidots manifest', status: 'ok', detail: `Installed: ${manifest!.installedAt}` })
+  } catch {
+    checks.push({ name: 'javidots manifest', status: 'fail', detail: 'Not installed. Run: npx javidots' })
+  }
+
+  // Check javi-ai
+  const javiAiPath = await which('javi-ai')
+  checks.push(javiAiPath
+    ? { name: 'javi-ai', status: 'ok', detail: javiAiPath }
+    : { name: 'javi-ai', status: 'fail', detail: 'Not found. Run: npm install -g javi-ai' })
+
+  // Check engram
+  const engramPath = await which('engram')
+  checks.push(engramPath
+    ? { name: 'engram', status: 'ok', detail: engramPath }
+    : { name: 'engram', status: 'fail', detail: 'Not found. Run: brew install gentleman-programming/tap/engram' })
+
+  // Check git (needed for agent-teams-lite)
+  const gitPath = await which('git')
+  checks.push(gitPath
+    ? { name: 'git', status: 'ok', detail: gitPath }
+    : { name: 'git', status: 'fail', detail: 'Required for SDD installation' })
+
+  // Check agent-teams-lite
+  const atlDir = fs.existsSync(path.join(MANIFEST_DIR, 'agent-teams-lite'))
+  checks.push(atlDir
+    ? { name: 'agent-teams-lite', status: 'ok', detail: '~/.javidots/agent-teams-lite' }
+    : { name: 'agent-teams-lite', status: 'fail', detail: 'Not cloned. Run: npx javidots' })
+
+  // Check ghagga (optional)
+  const ghaggaPath = await which('ghagga')
+  checks.push(ghaggaPath
+    ? { name: 'ghagga', status: 'ok', detail: ghaggaPath }
+    : { name: 'ghagga', status: 'skip', detail: 'Optional — https://github.com/JNZader/ghagga' })
+
+  // Check configured CLIs
+  if (manifest?.clis) {
+    for (const cli of manifest.clis) {
+      const cliPath = await which(cli === 'claude' ? 'claude' : cli)
+      checks.push(cliPath
+        ? { name: `CLI: ${cli}`, status: 'ok', detail: cliPath }
+        : { name: `CLI: ${cli}`, status: 'fail', detail: `${cli} not found in PATH` })
+    }
+  }
+
+  return { manifest, checks }
+}
