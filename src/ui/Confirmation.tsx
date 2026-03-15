@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Text, useInput } from 'ink'
 import type { AI_CLI } from '../types/index.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   clis: AI_CLI[]
@@ -19,8 +19,8 @@ export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel
 
   return (
     <Box flexDirection="column">
-      <Text bold>Setup Plan:</Text>
-      <Text color={theme.muted}>{'─'.repeat(32)}</Text>
+      <Text bold>Setup Plan</Text>
+      <Text color={theme.muted}>{glyph.separator.repeat(36)}</Text>
 
       <Box marginTop={1} flexDirection="column">
         <Box>
@@ -29,21 +29,24 @@ export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel
         </Box>
         <Box>
           <Text color={theme.muted}>{'  AI Framework: '}</Text>
-          <Text color={theme.accent}>javi-ai install</Text>
+          <Text color={theme.accent}>javi-ai</Text>
+          <Text color={theme.muted}> (skills, configs, orchestrators)</Text>
         </Box>
         <Box>
           <Text color={theme.muted}>{'  SDD:          '}</Text>
-          <Text color={theme.success}>agent-teams-lite (mandatory)</Text>
+          <Text color={theme.success}>agent-teams-lite {glyph.check} mandatory</Text>
         </Box>
         <Box>
           <Text color={theme.muted}>{'  Memory:       '}</Text>
-          <Text color={theme.success}>engram (mandatory)</Text>
+          <Text color={theme.success}>engram {glyph.check} mandatory</Text>
         </Box>
         <Box>
           <Text color={theme.muted}>{'  Code Review:  '}</Text>
-          <Text color={ghagga ? theme.success : theme.muted}>
-            {ghagga ? 'ghagga (enabled)' : 'ghagga (skipped)'}
-          </Text>
+          {ghagga ? (
+            <Text color={theme.success}>ghagga {glyph.check} enabled</Text>
+          ) : (
+            <Text color={theme.muted}>ghagga {glyph.cross} skipped</Text>
+          )}
         </Box>
       </Box>
 
@@ -55,7 +58,7 @@ export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel
 
       <Box marginTop={1}>
         <Text color={theme.muted} dimColor>
-          [Enter] Confirm  [Esc] Cancel
+          [Enter] Confirm  [Esc] Back
         </Text>
       </Box>
     </Box>

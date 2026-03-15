@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Box, Text } from 'ink'
 import Spinner from 'ink-spinner'
 import type { SetupStep, AI_CLI } from '../types/index.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   steps: SetupStep[]
@@ -11,10 +11,10 @@ interface Props {
 }
 
 const STATUS_ICON: Record<string, string> = {
-  pending: '○',
-  done:    '✓',
-  error:   '✗',
-  skipped: '–',
+  pending: glyph.emptyDot,
+  done:    glyph.check,
+  error:   glyph.cross,
+  skipped: glyph.dash,
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -35,11 +35,11 @@ export default function Progress({ steps, selectedClis, onDone }: Props) {
     s => s.status === 'done' || s.status === 'error' || s.status === 'skipped'
   )
 
-  // Auto-advance when all steps finish with no errors
+  // Auto-advance when all steps finish
   useEffect(() => {
     if (allFinished && !hasError && !doneRef.current && onDone) {
       doneRef.current = true
-      const t = setTimeout(onDone, 600)
+      const t = setTimeout(onDone, 500)
       return () => clearTimeout(t)
     }
     return undefined
@@ -47,20 +47,20 @@ export default function Progress({ steps, selectedClis, onDone }: Props) {
 
   return (
     <Box flexDirection="column">
-      {/* Summary header */}
+      {/* Context header */}
       <Box marginBottom={1} flexDirection="column">
         {selectedClis && selectedClis.length > 0 && (
           <Text color={theme.muted}>
-            {'Setting up for: '}
+            {'Setting up: '}
             <Text color={theme.primary}>{selectedClis.join(', ')}</Text>
           </Text>
         )}
         {total > 0 && (
           <Text color={theme.muted}>
-            {'Progress: '}
             <Text color={completed === total ? theme.success : theme.warning}>
-              {completed}/{total} steps
+              {completed}/{total}
             </Text>
+            {' steps'}
           </Text>
         )}
       </Box>
@@ -77,7 +77,7 @@ export default function Progress({ steps, selectedClis, onDone }: Props) {
               </Text>
             ) : (
               <Text color={(STATUS_COLOR[step.status] ?? theme.muted) as any}>
-                {STATUS_ICON[step.status] ?? '○'} {step.label}
+                {STATUS_ICON[step.status] ?? glyph.emptyDot} {step.label}
                 {step.detail ? <Text color={theme.muted} dimColor>  {step.detail}</Text> : null}
               </Text>
             )}

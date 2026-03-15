@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import type { SetupStep, AI_CLI } from '../types/index.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   steps: SetupStep[]
@@ -14,8 +14,8 @@ interface Props {
 export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga }: Props) {
   const { exit } = useApp()
 
-  const done   = steps.filter(s => s.status === 'done').length
-  const errors = steps.filter(s => s.status === 'error')
+  const done    = steps.filter(s => s.status === 'done')
+  const errors  = steps.filter(s => s.status === 'error')
   const skipped = steps.filter(s => s.status === 'skipped')
   const elapsed = elapsedMs != null
     ? `${(elapsedMs / 1000).toFixed(1)}s`
@@ -25,15 +25,17 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
     if (key.return || key.escape) exit()
   })
 
-  const cliList = selectedClis ?? []
+  const cliList  = selectedClis ?? []
   const firstCli = cliList[0] ?? 'claude'
 
   return (
     <Box flexDirection="column">
-      {/* Title */}
+      {/* Title with elapsed time */}
       <Text bold color={errors.length > 0 ? theme.warning : theme.success}>
-        {dryRun ? '○ Dry run complete' : '✓ Setup complete!'}
-        {elapsed && <Text color={theme.muted}>  ({elapsed})</Text>}
+        {dryRun
+          ? `${glyph.emptyDot} Dry run complete`
+          : `${glyph.check} Setup complete!`}
+        {elapsed && <Text color={theme.muted}>  Completed in {elapsed}</Text>}
       </Text>
 
       {/* Dry run note */}
@@ -43,23 +45,23 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
         </Box>
       )}
 
-      {/* Step results */}
+      {/* Step results grouped by status */}
       <Box marginTop={1} flexDirection="column">
-        {steps.filter(s => s.status === 'done').map(step => (
+        {done.map(step => (
           <Text key={step.id} color={theme.success}>
-            {'  ✓ '}{step.label}
+            {'  '}{glyph.check} {step.label}
             {step.detail ? <Text color={theme.muted} dimColor>  {step.detail}</Text> : null}
           </Text>
         ))}
         {skipped.map(step => (
           <Text key={step.id} color={theme.muted}>
-            {'  – '}{step.label}
+            {'  '}{glyph.dash} {step.label}
             {step.detail ? <Text dimColor>  {step.detail}</Text> : null}
           </Text>
         ))}
         {errors.map(step => (
           <Text key={step.id} color={theme.error}>
-            {'  ✗ '}{step.label}
+            {'  '}{glyph.cross} {step.label}
             {step.detail ? <Text dimColor>  {step.detail}</Text> : null}
           </Text>
         ))}
@@ -68,11 +70,11 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
       {/* Next steps */}
       <Box marginTop={1} flexDirection="column">
         <Text bold color={theme.primary}>  Next steps:</Text>
-        <Text color={theme.muted}>{'    Start coding with AI:   '}<Text color="white">{firstCli}</Text></Text>
-        <Text color={theme.muted}>{'    Initialize a project:   '}<Text color="white">npx javi-forge init</Text></Text>
-        <Text color={theme.muted}>{'    Check installation:     '}<Text color="white">npx javidots doctor</Text></Text>
+        <Text color={theme.muted}>{'    Start coding:         '}<Text color={theme.white}>{firstCli}</Text></Text>
+        <Text color={theme.muted}>{'    Init a new project:   '}<Text color={theme.white}>npx javi-forge init</Text></Text>
+        <Text color={theme.muted}>{'    Check health:         '}<Text color={theme.white}>npx javidots doctor</Text></Text>
         {!ghagga && (
-          <Text color={theme.muted}>{'    Add code review:        '}<Text color="white">npx javidots --ghagga</Text></Text>
+          <Text color={theme.muted}>{'    Add code review:      '}<Text color={theme.white}>npx javidots --ghagga</Text></Text>
         )}
       </Box>
 
