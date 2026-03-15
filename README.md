@@ -11,26 +11,33 @@ Para el slice ya extraido en Wave 4, este repo tambien es el entrypoint canonico
 ## Quick Start
 
 ```sh
+# Interactive TUI installer (easiest)
+scripts/tui.sh
+
+# Or use the unified orchestrator directly:
+
 # Preview what will change before touching anything
 scripts/javi.sh --preset base --dry-run --home "$HOME"
 
 # Apply base workstation (fish + ghostty + zed)
 scripts/javi.sh --preset base --home "$HOME"
 
-# Apply base + Claude Code
-scripts/javi.sh --preset ai-core --ai-choice ai.claude.user --home "$HOME"
+# Apply work profile (base + Claude Code)
+scripts/javi.sh --profile work --ai-choice ai.claude.user --home "$HOME"
 
-# Apply everything: base + AI + web project scaffold
-scripts/javi.sh --preset full \
-  --ai-choice ai.claude.user \
-  --template-choice forge.template.web.base \
-  --project-name my-app \
-  --home "$HOME"
+# Apply personal profile (base + ai-full + forge)
+scripts/javi.sh --profile personal --ai-choice ai.claude.user --home "$HOME"
 
-# See all presets, AI choices, and forge choices
+# Apply ai-heavy profile (base + all 6 providers)
+scripts/javi.sh --profile ai-heavy --home "$HOME"
+
+# Install a single module (e.g. tmux)
+scripts/javi.sh --module tmux --home "$HOME"
+
+# Discover everything
 scripts/javi.sh --list-presets
-scripts/bootstrap/apply-ai.sh --list-choices
-scripts/bootstrap/apply-forge.sh --list-choices
+scripts/javi.sh --list-profiles
+scripts/javi.sh --list-modules
 ```
 
 See `docs/quickstart.md` for a step-by-step first-time setup guide.
@@ -42,20 +49,34 @@ javi-dots/
 ├── README.md
 ├── .gitignore
 ├── profiles/
-│   └── base/
+│   ├── base/          # base workstation
+│   ├── minimal/       # base only (no AI/forge)
+│   ├── work/          # base + one AI provider
+│   ├── personal/      # base + ai-full + forge
+│   └── ai-heavy/      # base + all 6 AI providers
 ├── modules/
-│   ├── ai/
-│   ├── bootstrap/
-│   ├── editor/
-│   ├── forge/
+│   ├── ai/            # AI consumer mapping
+│   ├── bootstrap/     # module registry
+│   ├── editor/zed/    # Zed editor
+│   ├── forge/         # forge consumer mapping
+│   ├── multiplexer/
+│   │   ├── tmux/      # Tmux + TPM
+│   │   └── zellij/    # Zellij + layouts
+│   ├── prompt/
+│   │   └── starship/  # Starship prompt
 │   ├── shell/
+│   │   ├── fish/      # Fish + nvm
+│   │   └── zsh/       # Zsh + Oh-My-Zsh + P10k
 │   └── terminal/
+│       ├── ghostty/   # Ghostty terminal
+│       └── wezterm/   # WezTerm terminal
 ├── scripts/
-│   ├── javi.sh               ← unified bootstrap orchestrator
+│   ├── javi.sh        # unified orchestrator (presets, profiles, modules)
+│   ├── tui.sh         # interactive whiptail installer
 │   └── bootstrap/
-│       ├── apply.sh           ← workstation slice
-│       ├── apply-ai.sh        ← AI consumer wrapper
-│       └── apply-forge.sh     ← forge consumer wrapper
+│       ├── apply.sh   # workstation module linker
+│       ├── apply-ai.sh    # AI consumer wrapper
+│       └── apply-forge.sh # forge consumer wrapper
 └── docs/
     ├── quickstart.md
     ├── bootstrap-entrypoint.md
@@ -138,12 +159,29 @@ Documentacion canonica:
 
 ## Current State
 
-El milestone `dots-bootstrap-orchestration` convierte `javi-dots` en la capa de orquestacion limpia sobre los contratos estables de `javi-ai` y `javi-forge`.
+El milestone `javi-dots-completion` trae `javi-dots` a 100% practico.
 
-- `scripts/javi.sh` — entrypoint unificado con presets (`base`, `ai-core`, `ai-full`, `forge`, `full`)
-- `scripts/bootstrap/apply-forge.sh` — wrapper consumidor de forge (analogous to apply-ai.sh)
-- `modules/forge/module.yaml` — estado cutover-complete con bindings de generadores
-- `docs/quickstart.md` — guia de primera vez
+Scripts:
 
-Los assets del slice ya migrado (fish, ghostty, zed) permanecen canonicos en `javi-dots`.
+- `scripts/javi.sh` — orchestrator con presets, profiles, module flags, y genuine ai-full
+- `scripts/tui.sh` — interactive whiptail installer
+- `scripts/bootstrap/apply.sh` — workstation linker con soporte de modulos individuales
+- `scripts/bootstrap/apply-ai.sh` — AI consumer wrapper
+- `scripts/bootstrap/apply-forge.sh` — forge consumer wrapper
+
+Modulos implementados (10):
+
+- `shell.fish` — Fish shell + nvm
+- `shell.zsh` — Zsh + Oh-My-Zsh + Powerlevel10k
+- `terminal.ghostty` — Ghostty terminal + shader
+- `terminal.wezterm` — WezTerm terminal + Gentleman theme
+- `multiplexer.tmux` — Tmux + TPM plugins + Kanagawa theme
+- `multiplexer.zellij` — Zellij + vim keybindings + work layouts
+- `prompt.starship` — Starship cross-shell prompt
+- `editor.zed` — Zed editor settings + keymap
+
+Perfiles disponibles (5):
+
+- `base`, `minimal`, `work`, `personal`, `ai-heavy`
+
 Las docs legacy en `vault/Javi.Dots` quedan como referencia/mirror solamente.

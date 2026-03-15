@@ -51,6 +51,60 @@ module_slots:
       preferred_base: Gentleman.Dots
       legacy_delta:
         - vault/Javi.Dots/GentlemanZed/
+  - slot_id: terminal.wezterm
+    readiness: extracted-slice
+    module_manifest: modules/terminal/wezterm/module.yaml
+    extracted_assets:
+      - modules/terminal/wezterm/config/.wezterm.lua
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/.wezterm.lua
+    milestone: javi-dots-completion
+  - slot_id: multiplexer.tmux
+    readiness: extracted-slice
+    module_manifest: modules/multiplexer/tmux/module.yaml
+    extracted_assets:
+      - modules/multiplexer/tmux/config/tmux.conf
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanTmux/
+    milestone: javi-dots-completion
+  - slot_id: multiplexer.zellij
+    readiness: extracted-slice
+    module_manifest: modules/multiplexer/zellij/module.yaml
+    extracted_assets:
+      - modules/multiplexer/zellij/config/config.kdl
+      - modules/multiplexer/zellij/config/layouts/
+    excluded_assets:
+      - vault/Javi.Dots/GentlemanZellij/zellij/plugins/*.wasm
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanZellij/
+    milestone: javi-dots-completion
+  - slot_id: prompt.starship
+    readiness: extracted-slice
+    module_manifest: modules/prompt/starship/module.yaml
+    extracted_assets:
+      - modules/prompt/starship/config/starship.toml
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/starship.toml
+    milestone: javi-dots-completion
+  - slot_id: shell.zsh
+    readiness: extracted-slice
+    module_manifest: modules/shell/zsh/module.yaml
+    extracted_assets:
+      - modules/shell/zsh/config/.zshrc
+      - modules/shell/zsh/config/.p10k.zsh
+    lineage:
+      preferred_base: Gentleman.Dots
+      legacy_delta:
+        - vault/Javi.Dots/GentlemanZsh/
+    milestone: javi-dots-completion
 consumer_contracts:
   ai:
     module_manifest: modules/ai/module.yaml
@@ -67,3 +121,4 @@ notes:
   - WI-014 extracts the first bounded bootstrap slice into the canonical slots above
   - the extracted installer remains local to javi-dots and does not consume javi-ai internals
   - WI-026 cuts bootstrap AI consumption over to the published javi-ai install surface
+  - javi-dots-completion adds wezterm, tmux, zellij, starship, and zsh module slots
