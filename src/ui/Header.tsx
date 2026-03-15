@@ -1,13 +1,13 @@
 import React from 'react'
 import { Box, Text } from 'ink'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   subtitle?: string
   dryRun?: boolean
 }
 
-const TITLE = '✦ javidots  Developer workstation setup'
+const TITLE = `${glyph.star} javidots  Developer workstation setup`
 
 // Fixed inner width (characters between the box walls)
 const BOX_WIDTH = 45
@@ -19,10 +19,16 @@ function pad(content: string): string {
 }
 
 export default function Header({ subtitle, dryRun }: Props) {
-  const top    = '╭' + '─'.repeat(BOX_WIDTH) + '╮'
-  const bottom = '╰' + '─'.repeat(BOX_WIDTH) + '╯'
+  const top    = '╭' + glyph.separator.repeat(BOX_WIDTH) + '╮'
+  const bottom = '╰' + glyph.separator.repeat(BOX_WIDTH) + '╯'
   const titleLine = pad('  ' + TITLE + '  ')
-  const subLine   = subtitle ? pad('  ' + subtitle + '  ') : null
+
+  const subContent = [
+    subtitle,
+    dryRun ? 'DRY RUN' : null,
+  ].filter(Boolean).join('  │  ')
+
+  const subLine = subContent ? pad('  ' + subContent + '  ') : null
 
   return (
     <Box flexDirection="column" marginBottom={1}>
@@ -35,14 +41,11 @@ export default function Header({ subtitle, dryRun }: Props) {
       {subLine && (
         <Box>
           <Text color={theme.muted}>│</Text>
-          <Text color={theme.muted}>{subLine}</Text>
+          <Text color={dryRun ? theme.warning : theme.muted}>{subLine}</Text>
           <Text color={theme.muted}>│</Text>
         </Box>
       )}
       <Text color={theme.muted}>{bottom}</Text>
-      {dryRun && (
-        <Text color={theme.warning}> [DRY RUN]</Text>
-      )}
     </Box>
   )
 }
