@@ -20,5 +20,16 @@ describe('constants', () => {
     expect(CLI_OPTIONS).toHaveLength(6)
     const ids = CLI_OPTIONS.map((o) => o.id)
     expect(ids).toEqual(['claude', 'opencode', 'gemini', 'qwen', 'codex', 'copilot'])
+
+    // Also verify labels are non-empty and match expected values (kills label StringLiteral mutants)
+    const labels = CLI_OPTIONS.map((o) => o.label)
+    expect(labels).toEqual([
+      'Claude Code',
+      'OpenCode',
+      'Gemini CLI',
+      'Qwen',
+      'Codex CLI',
+      'GitHub Copilot',
+    ])
   })
 })

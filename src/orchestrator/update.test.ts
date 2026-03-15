@@ -91,6 +91,8 @@ describe('runUpdate', () => {
     expect(result.success).toBe(true)
     expect(result.detail).toContain('claude')
     expect(result.detail).toContain('opencode')
+    // Verify the join separator is ', ' (kills StringLiteral mutant on join)
+    expect(result.detail).toContain('claude, opencode')
   })
 
   it('dryRun forwarded to runSetup', async () => {

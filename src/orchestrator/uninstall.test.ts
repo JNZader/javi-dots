@@ -89,6 +89,12 @@ describe('runUninstall', () => {
     expect(execFile).not.toHaveBeenCalled()
     expect(fs.rmSync).not.toHaveBeenCalled()
     expect(fs.unlinkSync).not.toHaveBeenCalled()
+
+    // Steps should still be emitted with correct ids
+    const ids = steps.map((s) => s.id)
+    expect(ids).toContain('javi-ai')
+    expect(ids).toContain('atl')
+    expect(ids).toContain('manifest')
   })
 
   // ── Step 1: javi-ai uninstall ─────────────────────────────────────────────
@@ -101,7 +107,9 @@ describe('runUninstall', () => {
 
     const javiAiSteps = steps.filter((s) => s.id === 'javi-ai')
     expect(javiAiSteps[0].status).toBe('running')
+    expect(javiAiSteps[0].label).toContain('javi-ai')
     expect(javiAiSteps[1].status).toBe('done')
+    expect(javiAiSteps[1].label).toContain('javi-ai')
   })
 
   it('step 1 failure: error', async () => {
@@ -113,6 +121,7 @@ describe('runUninstall', () => {
 
     const javiAiError = steps.find((s) => s.id === 'javi-ai' && s.status === 'error')
     expect(javiAiError).toBeDefined()
+    expect(javiAiError!.label).toContain('javi-ai')
     expect(javiAiError!.detail).toContain('failed')
   })
 
@@ -142,6 +151,7 @@ describe('runUninstall', () => {
     expect(fs.rmSync).not.toHaveBeenCalled()
     const atlDone = steps.find((s) => s.id === 'atl' && s.status === 'done')
     expect(atlDone).toBeDefined()
+    expect(atlDone!.label).toContain('agent-teams-lite')
   })
 
   it('step 2 failure: error', async () => {
@@ -160,6 +170,7 @@ describe('runUninstall', () => {
 
     const atlError = steps.find((s) => s.id === 'atl' && s.status === 'error')
     expect(atlError).toBeDefined()
+    expect(atlError!.label).toContain('agent-teams-lite')
     expect(atlError!.detail).toContain('rmSync failed')
   })
 
@@ -190,6 +201,7 @@ describe('runUninstall', () => {
     expect(fs.unlinkSync).not.toHaveBeenCalled()
     const manifestDone = steps.find((s) => s.id === 'manifest' && s.status === 'done')
     expect(manifestDone).toBeDefined()
+    expect(manifestDone!.label).toContain('manifest')
   })
 
   it('step 3 failure: error', async () => {
@@ -208,6 +220,7 @@ describe('runUninstall', () => {
 
     const manifestError = steps.find((s) => s.id === 'manifest' && s.status === 'error')
     expect(manifestError).toBeDefined()
+    expect(manifestError!.label).toContain('manifest')
     expect(manifestError!.detail).toContain('unlinkSync failed')
   })
 

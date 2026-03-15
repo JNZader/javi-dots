@@ -43,6 +43,20 @@ function whichRouted(bins: Record<string, string | null>) {
   )
 }
 
+/** which returns stdout with whitespace that needs trimming */
+function whichReturnsPaddedPath(bin: string, paddedPath: string) {
+  ;(execFile as unknown as Mock).mockImplementation(
+    (cmd: string, args: string[], _opts: unknown, cb?: Function) => {
+      const callback = (typeof _opts === 'function' ? _opts : cb) as Function
+      if (cmd === 'which' && args[0] === bin) {
+        callback(null, { stdout: paddedPath, stderr: '' })
+      } else if (cmd === 'which') {
+        callback(new Error(`${args[0]} not found`))
+      }
+    },
+  )
+}
+
 const validManifest: Manifest = {
   version: '0.1.0',
   installedAt: '2025-01-01T00:00:00.000Z',
@@ -73,6 +87,7 @@ describe('runDoctor', () => {
     expect(manifestCheck!.status).toBe('ok')
     expect(manifestCheck!.detail).toContain('2025-01-01')
     expect(manifest).toBeDefined()
+    expect(manifest!.installedAt).toBe('2025-01-01T00:00:00.000Z')
   })
 
   it('manifest missing: fail with instruction', async () => {
@@ -95,10 +110,12 @@ describe('runDoctor', () => {
     whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
-    const { checks } = await runDoctor()
+    const { checks, manifest } = await runDoctor()
 
     const manifestCheck = checks.find((c) => c.name === 'javidots manifest')
     expect(manifestCheck!.status).toBe('fail')
+    expect(manifestCheck!.detail).toContain('npx javidots')
+    expect(manifest).toBeNull()
   })
 
   // ── Binary checks ────────────────────────────────────────────────────────
@@ -109,6 +126,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'javi-ai')
     expect(check!.status).toBe('ok')
+    expect(check!.detail).toBe('/usr/local/bin/javi-ai')
   })
 
   it('javi-ai not found: fail', async () => {
@@ -118,6 +136,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'javi-ai')
     expect(check!.status).toBe('fail')
+    expect(check!.detail).toContain('npm install -g javi-ai')
   })
 
   it('engram found: ok', async () => {
@@ -127,6 +146,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'engram')
     expect(check!.status).toBe('ok')
+    expect(check!.detail).toBe('/usr/local/bin/engram')
   })
 
   it('engram not found: fail', async () => {
@@ -136,6 +156,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'engram')
     expect(check!.status).toBe('fail')
+    expect(check!.detail).toContain('brew install')
   })
 
   it('git found: ok', async () => {
@@ -145,6 +166,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'git')
     expect(check!.status).toBe('ok')
+    expect(check!.detail).toBe('/usr/bin/git')
   })
 
   it('git not found: fail', async () => {
@@ -154,6 +176,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'git')
     expect(check!.status).toBe('fail')
+    expect(check!.detail).toContain('SDD')
   })
 
   // ── agent-teams-lite dir ─────────────────────────────────────────────────
@@ -165,6 +188,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'agent-teams-lite')
     expect(check!.status).toBe('ok')
+    expect(check!.detail).toContain('agent-teams-lite')
   })
 
   it('ATL dir absent: fail', async () => {
@@ -175,6 +199,7 @@ describe('runDoctor', () => {
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'agent-teams-lite')
     expect(check!.status).toBe('fail')
+    expect(check!.detail).toContain('npx javidots')
   })
 
   // ── ghagga ────────────────────────────────────────────────────────────────
@@ -184,8 +209,11 @@ describe('runDoctor', () => {
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'ghagga')
+    expect(check).toBeDefined()
+    expect(check!.name).toBe('ghagga')
     expect(check!.status).toBe('skip')
     expect(check!.status).not.toBe('fail')
+    expect(check!.detail).toContain('Optional')
   })
 
   // ── Dynamic CLI checks ───────────────────────────────────────────────────
@@ -206,10 +234,16 @@ describe('runDoctor', () => {
     const claudeCheck = checks.find((c) => c.name === 'CLI: claude')
     expect(claudeCheck).toBeDefined()
     expect(claudeCheck!.status).toBe('ok')
+    expect(claudeCheck!.detail).toBe('/usr/bin/claude')
 
     const opencodeCheck = checks.find((c) => c.name === 'CLI: opencode')
     expect(opencodeCheck).toBeDefined()
     expect(opencodeCheck!.status).toBe('ok')
+    expect(opencodeCheck!.detail).toBe('/usr/bin/opencode')
+
+    // Verify 2 CLI checks were emitted
+    const cliChecks = checks.filter((c) => c.name.startsWith('CLI:'))
+    expect(cliChecks).toHaveLength(2)
   })
 
   it('null manifest: no dynamic CLI checks', async () => {
@@ -220,5 +254,14 @@ describe('runDoctor', () => {
 
     const cliChecks = checks.filter((c) => c.name.startsWith('CLI:'))
     expect(cliChecks).toHaveLength(0)
+
+    // Ensure the expected static checks are still present
+    const names = checks.map((c) => c.name)
+    expect(names).toContain('javidots manifest')
+    expect(names).toContain('javi-ai')
+    expect(names).toContain('engram')
+    expect(names).toContain('git')
+    expect(names).toContain('agent-teams-lite')
+    expect(names).toContain('ghagga')
   })
 })

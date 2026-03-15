@@ -138,7 +138,9 @@ describe('runSetup', () => {
 
       const javiAiSteps = steps.filter((s) => s.id === 'javi-ai')
       expect(javiAiSteps[0].status).toBe('running')
+      expect(javiAiSteps[0].label).toContain('javi-ai')
       expect(javiAiSteps[1].status).toBe('done')
+      expect(javiAiSteps[1].label).toContain('javi-ai')
       expect(javiAiSteps[1].detail).toContain('claude,opencode')
     })
 
@@ -162,6 +164,7 @@ describe('runSetup', () => {
 
       const sddError = steps.find((s) => s.id === 'sdd' && s.status === 'error')
       expect(sddError).toBeDefined()
+      expect(sddError!.label).toContain('agent-teams-lite')
       expect(sddError!.detail).toContain('git not found')
     })
 
@@ -293,6 +296,7 @@ describe('runSetup', () => {
 
       const engramError = steps.find((s) => s.id === 'engram' && s.status === 'error')
       expect(engramError).toBeDefined()
+      expect(engramError!.label).toContain('engram')
       expect(engramError!.detail).toContain('brew not available')
     })
 
@@ -347,6 +351,7 @@ describe('runSetup', () => {
 
       const ghaggaSkip = steps.find((s) => s.id === 'ghagga' && s.status === 'skipped')
       expect(ghaggaSkip).toBeDefined()
+      expect(ghaggaSkip!.label).toContain('ghagga')
       expect(ghaggaSkip!.detail).toBe('Not selected')
     })
 
@@ -358,6 +363,7 @@ describe('runSetup', () => {
 
       const ghaggaDone = steps.find((s) => s.id === 'ghagga' && s.status === 'done')
       expect(ghaggaDone).toBeDefined()
+      expect(ghaggaDone!.label).toContain('ghagga')
 
       const calls = (execFile as unknown as Mock).mock.calls
       const ghaggaCall = calls.find(
@@ -382,6 +388,7 @@ describe('runSetup', () => {
 
       const ghaggaSkip = steps.find((s) => s.id === 'ghagga' && s.status === 'skipped')
       expect(ghaggaSkip).toBeDefined()
+      expect(ghaggaSkip!.label).toContain('ghagga')
       expect(ghaggaSkip!.detail).toContain('ghagga not installed')
     })
 
