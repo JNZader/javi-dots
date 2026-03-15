@@ -2,11 +2,18 @@ import React, { useEffect } from 'react'
 import { Box, Text } from 'ink'
 import Spinner from 'ink-spinner'
 import Header from './Header.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   onDone: () => void
 }
+
+const FEATURES = [
+  { color: theme.accent,  label: 'AI CLIs    ', desc: 'Claude, OpenCode, Gemini, Qwen, Codex, Copilot' },
+  { color: theme.primary, label: 'SDD        ', desc: 'Spec-Driven Development (mandatory)' },
+  { color: theme.success, label: 'Memory     ', desc: 'Persistent AI memory via engram (mandatory)' },
+  { color: theme.warning, label: 'Review     ', desc: 'Code review via ghagga (optional)' },
+] as const
 
 export default function Welcome({ onDone }: Props) {
   useEffect(() => {
@@ -21,22 +28,12 @@ export default function Welcome({ onDone }: Props) {
       <Box flexDirection="column" marginTop={1} marginLeft={2}>
         <Text>Set up your AI-powered dev environment:</Text>
         <Box marginTop={1} flexDirection="column">
-          <Text>
-            <Text color={theme.accent}>◆ AI CLIs     </Text>
-            <Text color={theme.muted}> Claude, OpenCode, Gemini, Qwen, Codex, Copilot</Text>
-          </Text>
-          <Text>
-            <Text color={theme.primary}>◆ SDD         </Text>
-            <Text color={theme.muted}> Spec-Driven Development (mandatory)</Text>
-          </Text>
-          <Text>
-            <Text color={theme.success}>◆ Memory      </Text>
-            <Text color={theme.muted}> Persistent AI memory via engram (mandatory)</Text>
-          </Text>
-          <Text>
-            <Text color={theme.warning}>◆ Review      </Text>
-            <Text color={theme.muted}> Code review via ghagga (optional)</Text>
-          </Text>
+          {FEATURES.map((f, i) => (
+            <Text key={i}>
+              <Text color={f.color}>{glyph.diamond} {f.label}</Text>
+              <Text color={theme.muted}> {f.desc}</Text>
+            </Text>
+          ))}
         </Box>
         <Box marginTop={1}>
           <Text color={theme.muted} dimColor>

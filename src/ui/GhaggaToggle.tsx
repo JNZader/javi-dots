@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Box, Text, useInput } from 'ink'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 interface Props {
   onConfirm: (ghagga: boolean) => void
@@ -22,37 +22,18 @@ export default function GhaggaToggle({ onConfirm }: Props) {
     <Box flexDirection="column">
       <Text bold>Enable code review automation?</Text>
 
-      <Box
-        marginTop={1}
-        flexDirection="column"
-        borderStyle="single"
-        borderLeft
-        borderRight={false}
-        borderTop={false}
-        borderBottom={false}
-        borderColor={theme.muted}
-        paddingLeft={1}
-      >
-        <Box>
-          <Text color={!enabled ? theme.primary : 'white'}>
-            {!enabled ? '▶ ' : '  '}
-            {!enabled ? '◉' : '○'} Skip ghagga
-          </Text>
-        </Box>
-        <Box>
-          <Text color={enabled ? theme.primary : 'white'}>
-            {enabled ? '▶ ' : '  '}
-            {enabled ? '◉' : '○'} Enable ghagga
-          </Text>
-        </Box>
+      <Box marginTop={1} marginLeft={2}>
+        <Text color={enabled ? theme.success : theme.muted}>
+          {enabled ? glyph.filledDot : glyph.emptyDot}{' '}
+        </Text>
+        <Text bold color={enabled ? theme.success : theme.muted}>ghagga</Text>
+        <Text color={theme.muted}>{'  '}</Text>
+        <Text color={theme.muted}>Multi-LLM AI code review for your PRs</Text>
       </Box>
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1}>
         <Text color={theme.muted} dimColor>
-          ghagga provides multi-agent code review for PRs.
-        </Text>
-        <Text color={theme.muted} dimColor>
-          ↑↓/Space toggle  Enter confirm
+          Space toggle  Enter confirm
         </Text>
       </Box>
     </Box>
