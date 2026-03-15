@@ -8,7 +8,7 @@ import Summary from './Summary.js'
 import Header from './Header.js'
 import type { AI_CLI, Manifest, SetupStep } from '../types/index.js'
 import { MANIFEST_PATH } from '../constants.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 type Stage = 'loading' | 'confirm' | 'updating' | 'done' | 'no-install'
 
@@ -19,20 +19,18 @@ interface UpdateProps {
 export default function Update({ dryRun = false }: UpdateProps) {
   const { exit } = useApp()
   const [stage, setStage] = useState<Stage>('loading')
-  const [installedClis, setInstalledClis] = useState<AI_CLI[]>([])
-  const [ghagga, setGhagga] = useState(false)
+  const [manifest, setManifest] = useState<Manifest | null>(null)
   const [steps, setSteps] = useState<SetupStep[]>([])
   const [startTime] = useState<number>(Date.now())
 
   useEffect(() => {
     try {
       const raw = fs.readFileSync(MANIFEST_PATH, 'utf-8')
-      const manifest: Manifest = JSON.parse(raw)
-      if (manifest.clis.length === 0) {
+      const m: Manifest = JSON.parse(raw)
+      if (m.clis.length === 0) {
         setStage('no-install')
       } else {
-        setInstalledClis(manifest.clis)
-        setGhagga(manifest.ghagga)
+        setManifest(m)
         setStage('confirm')
       }
     } catch {
@@ -58,11 +56,8 @@ export default function Update({ dryRun = false }: UpdateProps) {
 
   useInput((input, key) => {
     if (stage === 'confirm') {
-      if (input.toLowerCase() === 'y' || key.return) {
-        void startUpdate()
-      } else if (input.toLowerCase() === 'n' || key.escape) {
-        exit()
-      }
+      if (input.toLowerCase() === 'y' || key.return) void startUpdate()
+      else if (input.toLowerCase() === 'n' || key.escape) exit()
     }
     if (stage === 'no-install') {
       if (key.return || key.escape) exit()
@@ -73,6 +68,8 @@ export default function Update({ dryRun = false }: UpdateProps) {
     stage === 'updating' ? 'updating...' :
     stage === 'done'     ? 'complete'    :
     'update'
+
+  const clis = manifest?.clis ?? []
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -87,7 +84,7 @@ export default function Update({ dryRun = false }: UpdateProps) {
 
       {stage === 'no-install' && (
         <Box flexDirection="column">
-          <Text color={theme.error}>✗ No javidots installation found.</Text>
+          <Text color={theme.error}>{glyph.cross} No javidots installation found.</Text>
           <Text color={theme.muted}>Run <Text bold>npx javidots</Text> first.</Text>
           <Box marginTop={1}>
             <Text color={theme.muted} dimColor>Press Enter to exit</Text>
@@ -95,12 +92,36 @@ export default function Update({ dryRun = false }: UpdateProps) {
         </Box>
       )}
 
-      {stage === 'confirm' && (
+      {stage === 'confirm' && manifest && (
         <Box flexDirection="column">
-          <Text>
-            Update will re-install for:{' '}
-            <Text bold color={theme.primary}>{installedClis.join(', ')}</Text>
-          </Text>
+          <Text bold>Update Plan</Text>
+          <Text color={theme.muted}>{glyph.separator.repeat(36)}</Text>
+
+          <Box marginTop={1} flexDirection="column">
+            <Box>
+              <Text color={theme.muted}>{'  AI CLIs:      '}</Text>
+              <Text color={theme.primary} bold>{clis.join(', ')}</Text>
+            </Box>
+            <Box>
+              <Text color={theme.muted}>{'  SDD:          '}</Text>
+              <Text color={manifest.sdd ? theme.success : theme.muted}>
+                {manifest.sdd ? `${glyph.check} installed` : `${glyph.cross} not installed`}
+              </Text>
+            </Box>
+            <Box>
+              <Text color={theme.muted}>{'  Memory:       '}</Text>
+              <Text color={manifest.engram ? theme.success : theme.muted}>
+                {manifest.engram ? `${glyph.check} installed` : `${glyph.cross} not installed`}
+              </Text>
+            </Box>
+            <Box>
+              <Text color={theme.muted}>{'  Code Review:  '}</Text>
+              <Text color={manifest.ghagga ? theme.success : theme.muted}>
+                {manifest.ghagga ? `${glyph.check} enabled` : `${glyph.cross} skipped`}
+              </Text>
+            </Box>
+          </Box>
+
           <Box marginTop={1}>
             <Text>Continue? </Text>
             <Text bold>[Y/n] </Text>
@@ -111,7 +132,7 @@ export default function Update({ dryRun = false }: UpdateProps) {
       {stage === 'updating' && (
         <Progress
           steps={steps}
-          selectedClis={installedClis}
+          selectedClis={clis}
           onDone={() => setStage('done')}
         />
       )}
@@ -120,9 +141,9 @@ export default function Update({ dryRun = false }: UpdateProps) {
         <Summary
           steps={steps}
           dryRun={dryRun}
-          selectedClis={installedClis}
+          selectedClis={clis}
           elapsedMs={Date.now() - startTime}
-          ghagga={ghagga}
+          ghagga={manifest?.ghagga}
         />
       )}
     </Box>

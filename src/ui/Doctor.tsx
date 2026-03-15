@@ -4,14 +4,14 @@ import Spinner from 'ink-spinner'
 import { runDoctor } from '../orchestrator/doctor.js'
 import type { DoctorCheck } from '../types/index.js'
 import Header from './Header.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 type CheckStatus = DoctorCheck['status']
 
 const STATUS_ICON: Record<CheckStatus, string> = {
-  ok:   '✓',
-  fail: '✗',
-  skip: '–',
+  ok:   glyph.check,
+  fail: glyph.cross,
+  skip: glyph.dash,
 }
 
 const STATUS_COLOR: Record<CheckStatus, string> = {
@@ -38,15 +38,11 @@ export default function Doctor() {
   useEffect(() => { runCheck() }, [runCheck])
 
   useInput((input, key) => {
-    if (input.toLowerCase() === 'r') {
-      runCheck()
-    }
-    if (input.toLowerCase() === 'q' || key.return || key.escape) {
-      exit()
-    }
+    if (input.toLowerCase() === 'r') runCheck()
+    if (input.toLowerCase() === 'q' || key.return || key.escape) exit()
   })
 
-  // Compute health score
+  // Health score (exclude skipped)
   const nonSkip = checks?.filter(c => c.status !== 'skip') ?? []
   const passed  = nonSkip.filter(c => c.status === 'ok').length
   const total   = nonSkip.length
@@ -58,12 +54,12 @@ export default function Doctor() {
       {loading && (
         <Text color={theme.warning}>
           <Spinner type="dots" />
-          {' Running checks...'}
+          {' Running health checks...'}
         </Text>
       )}
 
       {error && (
-        <Text color={theme.error}>✗ Error: {error}</Text>
+        <Text color={theme.error}>{glyph.cross} Error: {error}</Text>
       )}
 
       {checks && (
@@ -104,7 +100,7 @@ export default function Doctor() {
       {!loading && (
         <Box marginTop={1}>
           <Text color={theme.muted} dimColor>
-            Press r to refresh, q to quit
+            r refresh  q quit
           </Text>
         </Box>
       )}

@@ -5,8 +5,9 @@ import fs from 'fs'
 import { runUninstall } from '../orchestrator/uninstall.js'
 import type { AI_CLI, Manifest, SetupStep } from '../types/index.js'
 import { MANIFEST_PATH } from '../constants.js'
+import Progress from './Progress.js'
 import Header from './Header.js'
-import { theme } from './theme.js'
+import { theme, glyph } from './theme.js'
 
 type Stage = 'loading' | 'confirm' | 'uninstalling' | 'done' | 'no-install'
 
@@ -55,11 +56,8 @@ export default function Uninstall() {
 
   useInput((input, key) => {
     if (stage === 'confirm') {
-      if (input.toLowerCase() === 'y' || key.return) {
-        void doUninstall()
-      } else if (input.toLowerCase() === 'n' || key.escape) {
-        exit()
-      }
+      if (input.toLowerCase() === 'y') void doUninstall()
+      else if (input.toLowerCase() === 'n' || key.return || key.escape) exit()
     }
     if (stage === 'no-install' || stage === 'done') {
       if (key.return || key.escape) exit()
@@ -85,8 +83,8 @@ export default function Uninstall() {
       {stage === 'no-install' && (
         <Box flexDirection="column">
           {error
-            ? <Text color={theme.error}>✗ Error: {error}</Text>
-            : <Text color={theme.error}>✗ No javidots installation found.</Text>
+            ? <Text color={theme.error}>{glyph.cross} Error: {error}</Text>
+            : <Text color={theme.error}>{glyph.cross} No javidots installation found.</Text>
           }
           <Box marginTop={1}>
             <Text color={theme.muted} dimColor>Press Enter to exit</Text>
@@ -96,14 +94,19 @@ export default function Uninstall() {
 
       {stage === 'confirm' && (
         <Box flexDirection="column">
-          <Text>
-            The following will be removed for:{' '}
-            <Text bold color={theme.primary}>{clis.join(', ')}</Text>
-          </Text>
+          <Text bold color={theme.error}>Are you sure?</Text>
+          <Text color={theme.muted}>{glyph.separator.repeat(36)}</Text>
+
+          <Box marginTop={1}>
+            <Text>
+              The following will be removed for:{' '}
+              <Text bold color={theme.primary}>{clis.join(', ')}</Text>
+            </Text>
+          </Box>
           <Box marginTop={1} flexDirection="column">
-            <Text color={theme.error}>  ✗ javi-ai managed files</Text>
-            <Text color={theme.error}>  ✗ agent-teams-lite clone</Text>
-            <Text color={theme.error}>  ✗ javidots manifest</Text>
+            <Text color={theme.error}>  {glyph.cross} javi-ai managed files</Text>
+            <Text color={theme.error}>  {glyph.cross} agent-teams-lite clone</Text>
+            <Text color={theme.error}>  {glyph.cross} javidots manifest</Text>
           </Box>
           <Box marginTop={1}>
             <Text color={theme.muted} dimColor>
@@ -118,33 +121,20 @@ export default function Uninstall() {
       )}
 
       {stage === 'uninstalling' && (
-        <Box flexDirection="column">
-          <Text color={theme.warning}>
-            <Spinner type="dots" />
-            {' Removing javidots managed files...'}
-          </Text>
-          <Box marginTop={1} flexDirection="column">
-            {steps.map(step => (
-              <Text key={step.id} color={step.status === 'done' ? theme.success : step.status === 'error' ? theme.error : theme.muted}>
-                {'  '}{step.status === 'done' ? '✓' : step.status === 'error' ? '✗' : '○'} {step.label}
-                {step.detail ? <Text color={theme.muted} dimColor>  {step.detail}</Text> : null}
-              </Text>
-            ))}
-          </Box>
-        </Box>
+        <Progress steps={steps} />
       )}
 
       {stage === 'done' && (
         <Box flexDirection="column">
           <Text bold color={error ? theme.error : theme.success}>
-            {error ? '✗ Uninstall failed' : '✓ Uninstall complete'}
+            {error ? `${glyph.cross} Uninstall failed` : `${glyph.check} Uninstall complete`}
           </Text>
           {error && <Text color={theme.error}>  {error}</Text>}
           {!error && (
             <Box marginTop={1} flexDirection="column">
               {steps.map(step => (
                 <Text key={step.id} color={step.status === 'done' ? theme.success : theme.error}>
-                  {'  '}{step.status === 'done' ? '✓' : '✗'} {step.label}
+                  {'  '}{step.status === 'done' ? glyph.check : glyph.cross} {step.label}
                   {step.detail ? <Text color={theme.muted} dimColor>  {step.detail}</Text> : null}
                 </Text>
               ))}
