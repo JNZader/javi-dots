@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, Text, useInput } from 'ink'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 interface Props {
@@ -7,7 +8,17 @@ interface Props {
 }
 
 export default function GhaggaToggle({ onConfirm }: Props) {
+  const isCI = useCIMode()
+  const autoConfirmed = useRef(false)
   const [enabled, setEnabled] = useState(false)
+
+  // Auto-confirm in CI mode (default: disabled)
+  useEffect(() => {
+    if (isCI && !autoConfirmed.current) {
+      autoConfirmed.current = true
+      onConfirm(false)
+    }
+  }, [isCI]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useInput((input, key) => {
     if (input === ' ' || key.upArrow || key.downArrow) {
@@ -16,7 +27,7 @@ export default function GhaggaToggle({ onConfirm }: Props) {
     if (key.return) {
       onConfirm(enabled)
     }
-  })
+  }, { isActive: !isCI })
 
   return (
     <Box flexDirection="column">

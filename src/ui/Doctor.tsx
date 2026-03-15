@@ -4,6 +4,7 @@ import Spinner from 'ink-spinner'
 import { runDoctor } from '../orchestrator/doctor.js'
 import type { DoctorCheck } from '../types/index.js'
 import Header from './Header.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 type CheckStatus = DoctorCheck['status']
@@ -22,6 +23,7 @@ const STATUS_COLOR: Record<CheckStatus, string> = {
 
 export default function Doctor() {
   const { exit } = useApp()
+  const isCI = useCIMode()
   const [checks, setChecks] = useState<DoctorCheck[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,10 +39,19 @@ export default function Doctor() {
 
   useEffect(() => { runCheck() }, [runCheck])
 
+  // Auto-exit in CI mode once loading finishes
+  useEffect(() => {
+    if (isCI && !loading) {
+      const t = setTimeout(() => exit(), 100)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [isCI, loading, exit])
+
   useInput((input, key) => {
     if (input.toLowerCase() === 'r') runCheck()
     if (input.toLowerCase() === 'q' || key.return || key.escape) exit()
-  })
+  }, { isActive: !isCI })
 
   // Health score (exclude skipped)
   const nonSkip = checks?.filter(c => c.status !== 'skip') ?? []

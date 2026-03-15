@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Box, Text, useInput } from 'ink'
 import type { AI_CLI } from '../types/index.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 interface Props {
@@ -12,10 +13,21 @@ interface Props {
 }
 
 export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel }: Props) {
+  const isCI = useCIMode()
+  const autoConfirmed = useRef(false)
+
+  // Auto-confirm in CI mode
+  useEffect(() => {
+    if (isCI && !autoConfirmed.current) {
+      autoConfirmed.current = true
+      onConfirm()
+    }
+  }, [isCI]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useInput((_input, key) => {
     if (key.return) onConfirm()
     if (key.escape) onCancel()
-  })
+  }, { isActive: !isCI })
 
   return (
     <Box flexDirection="column">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import Spinner from 'ink-spinner'
 import fs from 'fs'
@@ -7,12 +7,15 @@ import type { AI_CLI, Manifest, SetupStep } from '../types/index.js'
 import { MANIFEST_PATH } from '../constants.js'
 import Progress from './Progress.js'
 import Header from './Header.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 type Stage = 'loading' | 'confirm' | 'uninstalling' | 'done' | 'no-install'
 
 export default function Uninstall() {
   const { exit } = useApp()
+  const isCI = useCIMode()
+  const autoActed = useRef(false)
   const [stage, setStage] = useState<Stage>('loading')
   const [clis, setClis] = useState<AI_CLI[]>([])
   const [steps, setSteps] = useState<SetupStep[]>([])
@@ -54,6 +57,17 @@ export default function Uninstall() {
     }
   }
 
+  // Auto-exit in CI mode for terminal stages
+  useEffect(() => {
+    if (!isCI || autoActed.current) return
+    if (stage === 'no-install' || stage === 'done') {
+      autoActed.current = true
+      const t = setTimeout(() => exit(), 100)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [isCI, stage, exit])
+
   useInput((input, key) => {
     if (stage === 'confirm') {
       if (input.toLowerCase() === 'y') void doUninstall()
@@ -62,7 +76,7 @@ export default function Uninstall() {
     if (stage === 'no-install' || stage === 'done') {
       if (key.return || key.escape) exit()
     }
-  })
+  }, { isActive: !isCI })
 
   const subtitle =
     stage === 'uninstalling' ? 'uninstalling...' :

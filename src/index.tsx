@@ -6,6 +6,7 @@ import App from './ui/App.js'
 import Doctor from './ui/Doctor.js'
 import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
+import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
 const cli = meow(`
@@ -54,20 +55,21 @@ const cli = meow(`
 const subcommand = cli.input[0] ?? 'setup'
 
 const ALL_CLIS: AI_CLI[] = ['claude', 'opencode', 'gemini', 'qwen', 'codex', 'copilot']
+const isCI = process.env['CI'] === '1' || process.env['CI'] === 'true'
 
 switch (subcommand) {
   case 'doctor': {
-    render(<Doctor />)
+    render(<CIProvider isCI={isCI}><Doctor /></CIProvider>)
     break
   }
 
   case 'update': {
-    render(<Update dryRun={cli.flags.dryRun} />)
+    render(<CIProvider isCI={isCI}><Update dryRun={cli.flags.dryRun} /></CIProvider>)
     break
   }
 
   case 'uninstall': {
-    render(<Uninstall />)
+    render(<CIProvider isCI={isCI}><Uninstall /></CIProvider>)
     break
   }
 
@@ -90,8 +92,9 @@ switch (subcommand) {
       preselectedClis = cli.flags.cli.split(',').map(s => s.trim()) as AI_CLI[]
     }
 
-    // --ghagga / --no-ghagga override preset
-    if (cli.flags.ghagga !== undefined) {
+    // --ghagga / --no-ghagga override preset (only when explicitly passed)
+    const ghaggaExplicit = process.argv.includes('--ghagga') || process.argv.includes('--no-ghagga')
+    if (ghaggaExplicit) {
       presetGhagga = cli.flags.ghagga
     }
 
@@ -101,12 +104,14 @@ switch (subcommand) {
     }
 
     render(
-      <App
-        dryRun={cli.flags.dryRun}
-        preselectedClis={preselectedClis}
-        presetGhagga={presetGhagga}
-        skipTUI={skipTUI}
-      />
+      <CIProvider isCI={isCI}>
+        <App
+          dryRun={cli.flags.dryRun}
+          preselectedClis={preselectedClis}
+          presetGhagga={presetGhagga}
+          skipTUI={skipTUI}
+        />
+      </CIProvider>
     )
     break
   }

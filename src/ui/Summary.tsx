@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import type { SetupStep, AI_CLI } from '../types/index.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 
 export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga }: Props) {
   const { exit } = useApp()
+  const isCI = useCIMode()
 
   const done    = steps.filter(s => s.status === 'done')
   const errors  = steps.filter(s => s.status === 'error')
@@ -21,9 +23,18 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
     ? `${(elapsedMs / 1000).toFixed(1)}s`
     : null
 
+  // Auto-exit in CI mode
+  useEffect(() => {
+    if (isCI) {
+      const t = setTimeout(() => exit(), 100)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [isCI, exit])
+
   useInput((_input, key) => {
     if (key.return || key.escape) exit()
-  })
+  }, { isActive: !isCI })
 
   const cliList  = selectedClis ?? []
   const firstCli = cliList[0] ?? 'claude'

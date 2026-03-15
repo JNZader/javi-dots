@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import Spinner from 'ink-spinner'
 import fs from 'fs'
@@ -8,6 +8,7 @@ import Summary from './Summary.js'
 import Header from './Header.js'
 import type { AI_CLI, Manifest, SetupStep } from '../types/index.js'
 import { MANIFEST_PATH } from '../constants.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 type Stage = 'loading' | 'confirm' | 'updating' | 'done' | 'no-install'
@@ -18,6 +19,8 @@ interface UpdateProps {
 
 export default function Update({ dryRun = false }: UpdateProps) {
   const { exit } = useApp()
+  const isCI = useCIMode()
+  const autoActed = useRef(false)
   const [stage, setStage] = useState<Stage>('loading')
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [steps, setSteps] = useState<SetupStep[]>([])
@@ -54,6 +57,21 @@ export default function Update({ dryRun = false }: UpdateProps) {
     setStage('done')
   }
 
+  // Auto-confirm or auto-exit in CI mode
+  useEffect(() => {
+    if (!isCI || autoActed.current) return
+    if (stage === 'confirm') {
+      autoActed.current = true
+      void startUpdate()
+    }
+    if (stage === 'no-install') {
+      autoActed.current = true
+      const t = setTimeout(() => exit(), 100)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [isCI, stage]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useInput((input, key) => {
     if (stage === 'confirm') {
       if (input.toLowerCase() === 'y' || key.return) void startUpdate()
@@ -62,7 +80,7 @@ export default function Update({ dryRun = false }: UpdateProps) {
     if (stage === 'no-install') {
       if (key.return || key.escape) exit()
     }
-  })
+  }, { isActive: !isCI })
 
   const subtitle =
     stage === 'updating' ? 'updating...' :

@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, Text, useInput } from 'ink'
 import { CLI_OPTIONS } from '../constants.js'
 import type { AI_CLI } from '../types/index.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 interface Props {
@@ -9,8 +10,18 @@ interface Props {
 }
 
 export default function CLISelector({ onConfirm }: Props) {
+  const isCI = useCIMode()
+  const autoConfirmed = useRef(false)
   const [cursor, setCursor] = useState(0)
   const [selected, setSelected] = useState<Set<AI_CLI>>(new Set(['claude']))
+
+  // Auto-confirm in CI mode with defaults
+  useEffect(() => {
+    if (isCI && !autoConfirmed.current) {
+      autoConfirmed.current = true
+      onConfirm([...selected])
+    }
+  }, [isCI]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useInput((input, key) => {
     if (key.upArrow)   setCursor(c => Math.max(0, c - 1))
@@ -26,7 +37,7 @@ export default function CLISelector({ onConfirm }: Props) {
     if (key.return && selected.size > 0) {
       onConfirm([...selected])
     }
-  })
+  }, { isActive: !isCI })
 
   return (
     <Box flexDirection="column">

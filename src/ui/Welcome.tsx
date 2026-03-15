@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Box, Text } from 'ink'
 import Spinner from 'ink-spinner'
 import Header from './Header.js'
+import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
 interface Props {
@@ -16,10 +17,12 @@ const FEATURES = [
 ] as const
 
 export default function Welcome({ onDone }: Props) {
+  const isCI = useCIMode()
+
   useEffect(() => {
-    const timer = setTimeout(onDone, 1500)
+    const timer = setTimeout(onDone, isCI ? 0 : 1500)
     return () => clearTimeout(timer)
-  }, [onDone])
+  }, [onDone, isCI])
 
   return (
     <Box flexDirection="column" padding={1}>
