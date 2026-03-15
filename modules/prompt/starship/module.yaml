@@ -1,0 +1,29 @@
+kind: workstation-module
+contract_version: 0.1.0
+status: extracted-slice
+module:
+  id: prompt.starship
+  owner_repo: javi-dots
+  slot: prompt
+  milestone: javi-dots-completion
+  purpose: Starship cross-shell prompt with Gentleman palette and multi-language support
+  install_entrypoint: scripts/bootstrap/apply.sh
+assets:
+  - source: modules/prompt/starship/config/starship.toml
+    destination: ~/.config/starship.toml
+    delivery: link
+    role: starship prompt configuration
+dependencies:
+  - starship (brew install starship or curl install script)
+  - Add to shell config: eval "$(starship init fish)" or eval "$(starship init zsh)"
+lineage:
+  reference_source: vault/Javi.Dots/starship.toml
+  source_type: curated-delta
+  maintenance_owner: javi-dots
+  active_legacy_dependency: none
+rules:
+  - starship must be initialized in the shell config (fish.config or .zshrc)
+  - the config uses the Gentleman palette; catppuccin_mocha palette is also included
+notes:
+  - javi-dots-completion extracts the starship module.
+  - Supports Go, Rust, Node, Java, Python, C, Zig, Bun in the prompt format.

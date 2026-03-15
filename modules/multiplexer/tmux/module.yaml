@@ -1,0 +1,30 @@
+kind: workstation-module
+contract_version: 0.1.0
+status: extracted-slice
+module:
+  id: multiplexer.tmux
+  owner_repo: javi-dots
+  slot: multiplexer
+  milestone: javi-dots-completion
+  purpose: Tmux terminal multiplexer configuration with TPM plugins and Kanagawa theme
+  install_entrypoint: scripts/bootstrap/apply.sh
+assets:
+  - source: modules/multiplexer/tmux/config/tmux.conf
+    destination: ~/.tmux.conf
+    delivery: link
+    role: tmux main configuration
+dependencies:
+  - tmux (brew install tmux or package manager)
+  - TPM plugin manager: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  - After linking, run: tmux source ~/.tmux.conf, then prefix + I to install plugins
+lineage:
+  reference_source: vault/Javi.Dots/GentlemanTmux/tmux.conf
+  source_type: curated-delta
+  maintenance_owner: javi-dots
+  active_legacy_dependency: none
+rules:
+  - TPM must be installed separately before plugins load
+  - prefix is C-a (rebinds from default C-b)
+notes:
+  - javi-dots-completion extracts the tmux module from vault/Javi.Dots/GentlemanTmux/.
+  - Includes vim-tmux-navigator, tmux-yank, tmux-resurrect, Kanagawa theme.

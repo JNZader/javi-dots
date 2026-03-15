@@ -1,0 +1,35 @@
+kind: workstation-module
+contract_version: 0.1.0
+status: extracted-slice
+module:
+  id: multiplexer.zellij
+  owner_repo: javi-dots
+  slot: multiplexer
+  milestone: javi-dots-completion
+  purpose: Zellij terminal multiplexer with vim-like keybindings and work layouts
+  install_entrypoint: scripts/bootstrap/apply.sh
+assets:
+  - source: modules/multiplexer/zellij/config/config.kdl
+    destination: ~/.config/zellij/config.kdl
+    delivery: link
+    role: zellij main configuration with vim keybindings
+  - source: modules/multiplexer/zellij/config/layouts/
+    destination: ~/.config/zellij/layouts/
+    delivery: link-dir
+    role: work layout presets (kanagawa, everforest, sakura, work)
+dependencies:
+  - zellij (brew install zellij or cargo install zellij)
+  - zjstatus and zellij_forgot plugins: download separately from zellij plugin registry
+lineage:
+  reference_source: vault/Javi.Dots/GentlemanZellij/zellij/
+  source_type: curated-delta
+  maintenance_owner: javi-dots
+  active_legacy_dependency: none
+excluded_assets:
+  - zellij/plugins/*.wasm (binary files excluded; download from zellij plugin registry)
+rules:
+  - binary plugin .wasm files are not stored in this repo; download them separately
+  - config uses locked mode by default; press Ctrl+g to return to normal mode
+notes:
+  - javi-dots-completion extracts zellij config and layouts (KDL files only).
+  - .wasm plugin binaries are excluded; see the plugin registry for zjstatus and zellij_forgot.
