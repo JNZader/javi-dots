@@ -1,9 +1,51 @@
 # javi-dots
 
-> **Opinionated development machine setup.** One command to go from zero to a fully configured workstation with AI coding tools and project scaffolding.
+> **Opinionated development machine setup.** One command to go from a fresh machine to a fully configured workstation — with AI coding tools, project scaffolding, and a beautiful terminal environment.
 
 [![Docs](https://img.shields.io/badge/docs-javi--dots-blue)](https://jnzader.github.io/javi-dots/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+---
+
+## Ecosystem Architecture
+
+```mermaid
+graph TB
+    subgraph PLATFORM["javi-platform · Governance"]
+        ADR["ADRs & SDD\nChange Artifacts"]
+        CNTR["Contract\nRegistry"]
+    end
+
+    subgraph DOTS["javi-dots · Workstation Orchestration"]
+        JS["scripts/javi.sh\nUnified Orchestrator"]
+        TUI["scripts/tui.sh\nInteractive TUI"]
+        MOD["8 Modules\nfish · ghostty · zed\nwezterm · tmux · zellij\nstarship · zsh"]
+        PROF["5 Profiles\nminimal · base · work\npersonal · ai-heavy"]
+        BS["Bootstrap Layer\napply.sh · apply-ai.sh\napply-forge.sh"]
+    end
+
+    subgraph AI["javi-ai · AI Layer"]
+        PROV["6 Provider Profiles\nClaude Code · OpenCode\nGemini CLI · Qwen Code\nCodex CLI · Copilot"]
+        PKGS["7 Shared Packages\ninstruct · agents · skills\nhooks · commands · mcp · memory"]
+        PPKG["4 Project Packages\nai.instructions · sdd.base\nmemory.engram · ai.review"]
+    end
+
+    subgraph FORGE["javi-forge · Project Scaffolding"]
+        TMPL["7 Templates\nweb.base · api.base · api.go\napi.java · api.python\nfullstack.base · docs.base"]
+        GEN["3 Generators\nproject.init · ci.bootstrap\nreview.automation"]
+        FI["scripts/forge-init.sh"]
+    end
+
+    TUI -->|delegates to| JS
+    PROF -->|drives| JS
+    JS --> BS
+    BS -->|"published contract IDs"| AI
+    BS -->|"published contract IDs"| FORGE
+    BS --> MOD
+    CNTR -->|governs| BS
+    PKGS --> PROV
+    PPKG --> TMPL
+```
 
 ---
 
@@ -12,19 +54,48 @@
 ```mermaid
 flowchart TD
     A([scripts/javi.sh]) --> B{Mode}
-    B -->|--preset / --profile| C[Base Workstation]
-    B -->|--module| D[Single Module]
-    B -->|--interactive| E[TUI Installer]
-    C --> F[apply.sh]
-    F --> G[fish · ghostty · zed\nwezterm · tmux · zellij\nstarship · zsh]
-    C --> H{AI?}
-    H -->|yes| I[apply-ai.sh]
-    I --> J[javi-ai\ninstall-profiles.sh]
-    J --> K[Claude · OpenCode · Gemini\nQwen · Codex · Copilot]
-    C --> L{Forge?}
-    L -->|yes| M[apply-forge.sh]
-    M --> N[javi-forge\nforge-init.sh]
-    N --> O[Templates · Generators]
+    B -->|"--preset / --profile"| C[Resolve Preset]
+    B -->|"--module"| D[Single Module\nInstall]
+    B -->|"--interactive"| E[TUI Wizard\nscripts/tui.sh]
+    C --> F["apply.sh\nSymlink Workstation\nModules"]
+    F --> G["fish · ghostty · zed\nwezterm · tmux · zellij\nstarship · zsh"]
+    C --> H{AI preset?}
+    H -->|yes| I["apply-ai.sh\n--choice ai.*.user"]
+    I --> J["javi-ai\nscripts/install-profiles.sh"]
+    J --> K["Claude · OpenCode\nGemini · Qwen\nCodex · Copilot"]
+    C --> L{Forge preset?}
+    L -->|yes| M["apply-forge.sh\n--template-choice"]
+    M --> N["javi-forge\nscripts/forge-init.sh"]
+    N --> O["Templates\nGenerators\nCI Workflows"]
+```
+
+---
+
+## Bootstrap Sequence
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant tui.sh
+    participant javi.sh
+    participant apply.sh
+    participant javi-ai
+    participant javi-forge
+
+    User->>tui.sh: scripts/tui.sh
+    tui.sh->>tui.sh: show preset/profile menu
+    tui.sh->>tui.sh: show provider menu (if AI)
+    tui.sh->>tui.sh: show confirm screen
+    tui.sh->>javi.sh: --preset full --ai-choice ai.claude.user --template-choice forge.template.api.go
+    javi.sh->>apply.sh: install workstation modules
+    apply.sh->>apply.sh: symlink fish, ghostty, zed, wezterm, tmux, zellij, starship, zsh
+    apply.sh-->>User: linked: ~/.config/fish/config.fish ...
+    javi.sh->>javi-ai: install-profiles.sh --provider claude --target target.claude.user
+    javi-ai->>javi-ai: link settings.json, statusline.sh, tweakcc-theme.json
+    javi-ai-->>User: linked: ~/.claude/settings.json
+    javi.sh->>javi-forge: forge-init.sh --template template.api.go --project-name my-api
+    javi-forge->>javi-forge: generate CI, dependabot, ci-local, .gitignore
+    javi-forge-->>User: result: forge slice generated in ~/my-api
 ```
 
 ---
@@ -121,7 +192,7 @@ scripts/tui.sh              # launch interactive installer
 scripts/tui.sh --dry-run    # preview without executing
 ```
 
-The TUI uses `whiptail` (available on most Linux distros and macOS via brew) and falls back to plain prompts if not available. It guides you through preset → provider → confirm.
+The TUI uses `whiptail` (available on most Linux distros and macOS via `brew install newt`) and falls back to plain prompts if not available. It guides you through preset → provider → confirm.
 
 ---
 
