@@ -1,0 +1,13 @@
+{
+  "testRunner": "vitest",
+  "mutate": [
+    "src/orchestrator/index.ts",
+    "src/orchestrator/doctor.ts",
+    "src/orchestrator/update.ts",
+    "src/orchestrator/uninstall.ts",
+    "src/constants.ts"
+  ],
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.json",
+  "thresholds": { "high": 80, "low": 60, "break": 50 }
+}
