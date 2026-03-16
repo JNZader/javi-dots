@@ -1,10 +1,10 @@
 {
-  "name": "javidots",
+  "name": "javi-dots",
   "version": "0.1.0",
   "description": "Developer workstation setup — AI CLIs, SDD, memory, and code review in one command",
   "type": "module",
   "bin": {
-    "javidots": "./dist/index.js"
+    "javi-dots": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
