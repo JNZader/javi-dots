@@ -1,0 +1,134 @@
+# javi-dots
+
+> Developer workstation setup — AI CLIs, SDD, memory, and code review in one command
+
+[![npm version](https://img.shields.io/npm/v/javi-dots.svg)](https://www.npmjs.com/package/javi-dots)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+## Quick Start
+
+```bash
+npx javi-dots
+```
+
+That's it. An interactive TUI walks you through selecting AI CLIs, then installs everything: skills, configs, orchestrators, persistent memory, SDD workflow, and optionally code review.
+
+## What It Does
+
+`javi-dots` is the single entry point for setting up an AI-powered developer workstation. It orchestrates multiple tools so you don't have to install them one by one.
+
+```mermaid
+flowchart LR
+    A["npx javi-dots"] --> B["Select AI CLIs"]
+    B --> C["javi-ai install"]
+    C --> D["agent-teams-lite<br/>(SDD workflow)"]
+    D --> E["engram<br/>(persistent memory)"]
+    E --> F{"ghagga?"}
+    F -- yes --> G["ghagga init<br/>(code review)"]
+    F -- no --> H["Done ✓"]
+    G --> H
+```
+
+### Setup Steps
+
+| Step | Component | Required | Description |
+|------|-----------|----------|-------------|
+| 1 | **javi-ai** | ✅ | Installs skills, configs, and orchestrators for selected CLIs |
+| 2 | **agent-teams-lite** | ✅ | Clones and configures the SDD (Spec-Driven Development) framework |
+| 3 | **engram** | ✅ | Installs persistent AI memory via Homebrew, configures per CLI |
+| 4 | **ghagga** | ❌ | Optional multi-agent code review system |
+
+## Presets
+
+| Preset | CLIs | ghagga | TUI |
+|--------|------|--------|-----|
+| `full` | All 6 (Claude, OpenCode, Gemini, Qwen, Codex, Copilot) | ✅ | Skipped |
+| `minimal` | Claude only | ❌ | Skipped |
+| `custom` | Interactive selection | Interactive | Full TUI |
+
+```bash
+# Full preset — everything, no prompts
+npx javi-dots --preset full
+
+# Minimal — Claude only
+npx javi-dots --preset minimal
+
+# Custom — interactive TUI (default)
+npx javi-dots
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `setup` | Set up developer workstation (default) |
+| `doctor` | Show health report of current installation |
+| `update` | Re-run setup for previously configured CLIs |
+| `uninstall` | Remove javi-dots managed files and manifests |
+
+```bash
+npx javi-dots setup        # same as just: npx javi-dots
+npx javi-dots doctor       # check installation health
+npx javi-dots update       # re-apply with same config
+npx javi-dots uninstall    # clean removal
+```
+
+## CLI Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--dry-run` | boolean | `false` | Preview changes without writing anything |
+| `--preset` | string | `custom` | Preset: `full`, `minimal`, `custom` |
+| `--cli` | string | — | Comma-separated CLIs: `claude,opencode,gemini,qwen,codex,copilot` |
+| `--ghagga` | boolean | — | Enable ghagga code review |
+| `--no-ghagga` | boolean | — | Disable ghagga code review |
+
+Flags override presets. If you pass both `--cli` and `--ghagga`/`--no-ghagga`, the TUI is skipped entirely:
+
+```bash
+npx javi-dots setup --cli claude,opencode --ghagga --dry-run
+```
+
+## What Gets Installed
+
+### javi-ai
+
+The AI development layer installer. Deploys skills, configs, orchestrators, hooks, and plugins to `~/.claude/`, `~/.config/opencode/`, `~/.gemini/`, etc. depending on which CLIs you selected.
+
+👉 See [javi-ai](https://github.com/JNZader/javi-ai)
+
+### agent-teams-lite (SDD)
+
+Spec-Driven Development framework. Cloned to `~/.javidots/agent-teams-lite/` and configured for each selected CLI. Provides structured planning workflows: `proposal → spec → design → tasks → apply → verify`.
+
+### engram
+
+Persistent AI memory system. Installed via Homebrew (`brew install gentleman-programming/tap/engram`). Each CLI gets its own engram configuration so conversations persist across sessions.
+
+### ghagga (optional)
+
+Multi-agent code review system. When enabled, runs `ghagga init` to configure consensus-based AI code review in your projects.
+
+👉 See [ghagga](https://github.com/JNZader/ghagga)
+
+## Manifest
+
+Configuration is saved to `~/.javidots/manifest.json`. The `update` and `uninstall` commands read this manifest to know what was installed.
+
+## Requirements
+
+- **Node.js** ≥ 18
+- **git** — required for cloning agent-teams-lite
+- **brew** — required for installing engram (macOS/Linux)
+
+## Ecosystem
+
+| Package | Description |
+|---------|-------------|
+| [javi-dots](https://github.com/JNZader/javi-dots) | Workstation setup (this package) |
+| [javi-ai](https://github.com/JNZader/javi-ai) | AI development layer — skills, configs, orchestrators |
+| [javi-forge](https://github.com/JNZader/javi-forge) | Project scaffolding — CI, templates, AI bootstrap |
+
+## License
+
+[MIT](LICENSE)

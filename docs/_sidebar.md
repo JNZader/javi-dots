@@ -1,0 +1,8 @@
+- [Home](/)
+- [Getting Started](getting-started.md)
+- [Commands](commands.md)
+- [Presets](presets.md)
+- [Architecture](architecture.md)
+- **Links**
+- [javi-ai](https://github.com/JNZader/javi-ai)
+- [javi-forge](https://github.com/JNZader/javi-forge)
