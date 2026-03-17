@@ -7,6 +7,7 @@ import Doctor from './ui/Doctor.js'
 import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
+import Profile from './ui/Profile.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -15,12 +16,16 @@ const cli = meow(`
     $ javidots [command] [options]
 
   Commands
-    setup       Set up developer workstation (default)
-    sync        Sync central config to all configured editors
-    status      Show sync status for all configured editors
-    doctor      Show health report of current installation
-    update      Re-run setup for previously configured CLIs
-    uninstall   Remove javidots managed files
+    setup            Set up developer workstation (default)
+    sync             Sync central config to all configured editors
+    status           Show sync status for all configured editors
+    profile create   Create a profile from current config
+    profile switch   Switch to a named profile
+    profile list     List all profiles
+    profile delete   Delete a profile
+    doctor           Show health report of current installation
+    update           Re-run setup for previously configured CLIs
+    uninstall        Remove javidots managed files
 
   Options
     --dry-run       Preview without making changes
@@ -45,6 +50,10 @@ const cli = meow(`
     $ javidots sync
     $ javidots sync --dry-run
     $ javidots status
+    $ javidots profile create work
+    $ javidots profile switch frontend
+    $ javidots profile list
+    $ javidots profile delete old-profile
     $ javidots doctor
     $ javidots update
     $ javidots uninstall
@@ -71,6 +80,25 @@ switch (subcommand) {
 
   case 'status': {
     render(<CIProvider isCI={isCI}><Sync mode="status" dryRun={false} /></CIProvider>)
+    break
+  }
+
+  case 'profile': {
+    const profileAction = cli.input[1] as 'create' | 'switch' | 'list' | 'delete' | undefined
+    const VALID_PROFILE_ACTIONS = ['create', 'switch', 'list', 'delete']
+    const action = profileAction && VALID_PROFILE_ACTIONS.includes(profileAction) ? profileAction : 'list'
+    const target = cli.input[2]
+
+    render(
+      <CIProvider isCI={isCI}>
+        <Profile
+          action={action}
+          target={target}
+          description={cli.input.slice(3).join(' ') || undefined}
+          dryRun={cli.flags.dryRun}
+        />
+      </CIProvider>
+    )
     break
   }
 

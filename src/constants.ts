@@ -12,6 +12,8 @@ export const CONFIG_SKILLS_DIR = path.join(CONFIG_REPO_DIR, 'skills')
 export const CONFIG_HOOKS_DIR = path.join(CONFIG_REPO_DIR, 'hooks')
 export const CONFIG_PROMPTS_DIR = path.join(CONFIG_REPO_DIR, 'prompts')
 export const SYNC_STATE_PATH = path.join(MANIFEST_DIR, 'sync-state.json')
+export const PROFILES_DIR = path.join(MANIFEST_DIR, 'profiles')
+export const PROFILES_STATE_PATH = path.join(MANIFEST_DIR, 'profiles-state.json')
 
 export const CLI_OPTIONS: Array<{ id: AI_CLI; label: string }> = [
   { id: 'claude', label: 'Claude Code' },

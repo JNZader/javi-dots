@@ -62,3 +62,19 @@ export interface SyncResult {
   configsCopied: number
   errors: string[]
 }
+
+// ── Profiles ────────────────────────────────────────────────────────────────
+
+export interface Profile {
+  name: string
+  description: string
+  skills: string[]
+  hooks: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProfilesState {
+  active: string | null
+  profiles: Record<string, Profile>
+}
