@@ -8,6 +8,7 @@ import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
 import Profile from './ui/Profile.js'
+import Prompt from './ui/Prompt.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -23,6 +24,9 @@ const cli = meow(`
     profile switch   Switch to a named profile
     profile list     List all profiles
     profile delete   Delete a profile
+    prompt list      List all prompts (or by domain)
+    prompt show      Display a prompt's content
+    prompt add       Create a new prompt
     doctor           Show health report of current installation
     update           Re-run setup for previously configured CLIs
     uninstall        Remove javidots managed files
@@ -97,6 +101,22 @@ switch (subcommand) {
           description={cli.input.slice(3).join(' ') || undefined}
           dryRun={cli.flags.dryRun}
         />
+      </CIProvider>
+    )
+    break
+  }
+
+  case 'prompt': {
+    const promptAction = cli.input[1] as 'list' | 'show' | 'add' | undefined
+    const VALID_PROMPT_ACTIONS = ['list', 'show', 'add']
+    const action = promptAction && VALID_PROMPT_ACTIONS.includes(promptAction) ? promptAction : 'list'
+    // For 'add': prompt add <domain> <name>; for others: prompt show/list <target>
+    const promptTarget = action === 'add' ? cli.input[3] : cli.input[2]
+    const promptDomain = action === 'add' ? cli.input[2] : undefined
+
+    render(
+      <CIProvider isCI={isCI}>
+        <Prompt action={action} target={promptTarget} domain={promptDomain} dryRun={cli.flags.dryRun} />
       </CIProvider>
     )
     break
