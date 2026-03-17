@@ -30,3 +30,35 @@ export interface Manifest {
   sdd: boolean
   ghagga: boolean
 }
+
+// ── Multi-Editor Config Sync ────────────────────────────────────────────────
+
+export interface EditorConfig {
+  id: AI_CLI
+  label: string
+  /** Global config directory (e.g. ~/.claude/) */
+  globalDir: string
+  /** Skills subdirectory (e.g. ~/.claude/skills/) */
+  skillsDir: string
+  /** Hooks subdirectory if supported */
+  hooksDir?: string
+  /** Main instruction file (e.g. CLAUDE.md, AGENTS.md) */
+  instructionFile?: string
+}
+
+export interface SyncStatus {
+  editor: AI_CLI
+  label: string
+  synced: boolean
+  skillCount: number
+  hookCount: number
+  lastSync?: string
+}
+
+export interface SyncResult {
+  editor: AI_CLI
+  skillsCopied: number
+  hooksCopied: number
+  configsCopied: number
+  errors: string[]
+}

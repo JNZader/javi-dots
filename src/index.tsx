@@ -6,6 +6,7 @@ import App from './ui/App.js'
 import Doctor from './ui/Doctor.js'
 import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
+import Sync from './ui/Sync.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -15,6 +16,8 @@ const cli = meow(`
 
   Commands
     setup       Set up developer workstation (default)
+    sync        Sync central config to all configured editors
+    status      Show sync status for all configured editors
     doctor      Show health report of current installation
     update      Re-run setup for previously configured CLIs
     uninstall   Remove javidots managed files
@@ -39,6 +42,9 @@ const cli = meow(`
     $ javidots setup --cli claude,opencode --ghagga
     $ javidots --preset minimal
     $ javidots --preset full --dry-run
+    $ javidots sync
+    $ javidots sync --dry-run
+    $ javidots status
     $ javidots doctor
     $ javidots update
     $ javidots uninstall
@@ -58,6 +64,16 @@ const ALL_CLIS: AI_CLI[] = ['claude', 'opencode', 'gemini', 'qwen', 'codex', 'co
 const isCI = process.env['CI'] === '1' || process.env['CI'] === 'true'
 
 switch (subcommand) {
+  case 'sync': {
+    render(<CIProvider isCI={isCI}><Sync mode="sync" dryRun={cli.flags.dryRun} /></CIProvider>)
+    break
+  }
+
+  case 'status': {
+    render(<CIProvider isCI={isCI}><Sync mode="status" dryRun={false} /></CIProvider>)
+    break
+  }
+
   case 'doctor': {
     render(<CIProvider isCI={isCI}><Doctor /></CIProvider>)
     break
