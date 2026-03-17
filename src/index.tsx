@@ -9,6 +9,7 @@ import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
 import Profile from './ui/Profile.js'
 import Prompt from './ui/Prompt.js'
+import Stats from './ui/Stats.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -27,6 +28,8 @@ const cli = meow(`
     prompt list      List all prompts (or by domain)
     prompt show      Display a prompt's content
     prompt add       Create a new prompt
+    stats            Show session analytics (tokens, cost, tools)
+    versions         Show installed agent versions
     doctor           Show health report of current installation
     update           Re-run setup for previously configured CLIs
     uninstall        Remove javidots managed files
@@ -119,6 +122,16 @@ switch (subcommand) {
         <Prompt action={action} target={promptTarget} domain={promptDomain} dryRun={cli.flags.dryRun} />
       </CIProvider>
     )
+    break
+  }
+
+  case 'stats': {
+    render(<CIProvider isCI={isCI}><Stats mode="stats" /></CIProvider>)
+    break
+  }
+
+  case 'versions': {
+    render(<CIProvider isCI={isCI}><Stats mode="versions" /></CIProvider>)
     break
   }
 
