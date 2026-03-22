@@ -61,10 +61,19 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
           { timeout: 60000 })
       }
       // Run install for each CLI
+      // ATL uses different agent names than javi-dots CLI ids
+      const ATL_AGENT_MAP: Record<string, string> = {
+        claude: 'claude-code',
+        opencode: 'opencode',
+        gemini: 'gemini-cli',
+        codex: 'codex',
+      }
       const setupScript = path.join(atlDir, 'scripts', 'setup.sh')
       if (fs.existsSync(setupScript)) {
         for (const cli of clis) {
-          await execFileAsync('bash', [setupScript, '--agent', cli], {
+          const atlAgent = ATL_AGENT_MAP[cli]
+          if (!atlAgent) continue // skip CLIs not supported by ATL (qwen, copilot)
+          await execFileAsync('bash', [setupScript, '--agent', atlAgent], {
             timeout: 30000,
             cwd: atlDir,
           })
