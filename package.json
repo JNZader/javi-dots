@@ -1,6 +1,6 @@
 {
   "name": "javi-dots",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Developer workstation setup — AI CLIs, SDD, memory, and code review in one command",
   "type": "module",
   "bin": {
