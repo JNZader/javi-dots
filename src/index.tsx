@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import React from 'react'
 import { render } from 'ink'
+import { PassThrough } from 'node:stream'
 import meow from 'meow'
 import App from './ui/App.js'
 import Doctor from './ui/Doctor.js'
@@ -77,16 +78,22 @@ const cli = meow(`
 const subcommand = cli.input[0] ?? 'setup'
 
 const ALL_CLIS: AI_CLI[] = ['claude', 'opencode', 'gemini', 'qwen', 'codex', 'copilot']
-const isCI = process.env['CI'] === '1' || process.env['CI'] === 'true'
+// When stdin doesn't support raw mode (pipes, subprocesses, CI), provide a fake
+// stdin stream so Ink doesn't crash trying to enable raw mode on a non-TTY pipe.
+const isTTY = process.stdin.isTTY === true
+const fakeStdin = new PassThrough() as unknown as NodeJS.ReadStream
+Object.defineProperty(fakeStdin, 'isTTY', { value: false })
+const inkStdin = isTTY ? process.stdin : fakeStdin
+const isCI = process.env['CI'] === '1' || process.env['CI'] === 'true' || !isTTY
 
 switch (subcommand) {
   case 'sync': {
-    render(<CIProvider isCI={isCI}><Sync mode="sync" dryRun={cli.flags.dryRun} /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Sync mode="sync" dryRun={cli.flags.dryRun} /></CIProvider>, { stdin: inkStdin })
     break
   }
 
   case 'status': {
-    render(<CIProvider isCI={isCI}><Sync mode="status" dryRun={false} /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Sync mode="status" dryRun={false} /></CIProvider>, { stdin: inkStdin })
     break
   }
 
@@ -104,7 +111,8 @@ switch (subcommand) {
           description={cli.input.slice(3).join(' ') || undefined}
           dryRun={cli.flags.dryRun}
         />
-      </CIProvider>
+      </CIProvider>,
+      { stdin: inkStdin }
     )
     break
   }
@@ -120,33 +128,34 @@ switch (subcommand) {
     render(
       <CIProvider isCI={isCI}>
         <Prompt action={action} target={promptTarget} domain={promptDomain} dryRun={cli.flags.dryRun} />
-      </CIProvider>
+      </CIProvider>,
+      { stdin: inkStdin }
     )
     break
   }
 
   case 'stats': {
-    render(<CIProvider isCI={isCI}><Stats mode="stats" /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Stats mode="stats" /></CIProvider>, { stdin: inkStdin })
     break
   }
 
   case 'versions': {
-    render(<CIProvider isCI={isCI}><Stats mode="versions" /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Stats mode="versions" /></CIProvider>, { stdin: inkStdin })
     break
   }
 
   case 'doctor': {
-    render(<CIProvider isCI={isCI}><Doctor /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Doctor /></CIProvider>, { stdin: inkStdin })
     break
   }
 
   case 'update': {
-    render(<CIProvider isCI={isCI}><Update dryRun={cli.flags.dryRun} /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Update dryRun={cli.flags.dryRun} /></CIProvider>, { stdin: inkStdin })
     break
   }
 
   case 'uninstall': {
-    render(<CIProvider isCI={isCI}><Uninstall /></CIProvider>)
+    render(<CIProvider isCI={isCI}><Uninstall /></CIProvider>, { stdin: inkStdin })
     break
   }
 
@@ -188,7 +197,8 @@ switch (subcommand) {
           presetGhagga={presetGhagga}
           skipTUI={skipTUI}
         />
-      </CIProvider>
+      </CIProvider>,
+      { stdin: inkStdin }
     )
     break
   }
