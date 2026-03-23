@@ -75,7 +75,7 @@ This checks:
 
 ## Non-Interactive Usage
 
-For CI or automated scripts, use presets or explicit flags:
+All commands work in non-TTY environments (pipes, subprocesses). For CI or automated scripts, use presets or explicit flags:
 
 ```bash
 # Full setup, no prompts

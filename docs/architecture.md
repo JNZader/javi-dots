@@ -64,7 +64,7 @@ sequenceDiagram
         Note over App,Git: Step 2: SDD Framework
         App->>Git: git clone agent-teams-lite
         Git-->>App: cloned
-        App->>App: Run setup.sh per CLI
+        App->>App: Run setup.sh per CLI (mapped names)
     end
 
     rect rgb(6, 182, 212, 0.1)

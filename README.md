@@ -57,6 +57,8 @@ npx javi-dots --preset minimal
 npx javi-dots
 ```
 
+All commands work in non-TTY environments (pipes, subprocesses).
+
 ## Commands
 
 | Command | Description |
@@ -99,7 +101,7 @@ The AI development layer installer. Deploys skills, configs, orchestrators, hook
 
 ### agent-teams-lite (SDD)
 
-Spec-Driven Development framework. Cloned to `~/.javidots/agent-teams-lite/` and configured for each selected CLI. Provides structured planning workflows: `proposal → spec → design → tasks → apply → verify`.
+Spec-Driven Development framework. Cloned to `~/.javidots/agent-teams-lite/` and configured for each selected CLI using mapped names (`claude` → `claude-code`, `gemini` → `gemini-cli`). Provides structured planning workflows: `proposal → spec → design → tasks → apply → verify`.
 
 ### engram
 

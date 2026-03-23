@@ -11,7 +11,7 @@ npx javi-dots setup [options]
 ### What it does
 
 1. Installs `javi-ai` for the selected CLIs (skills, configs, orchestrators)
-2. Clones `agent-teams-lite` to `~/.javidots/agent-teams-lite/` and runs its setup per CLI
+2. Clones `agent-teams-lite` to `~/.javidots/agent-teams-lite/` and runs its setup per CLI using mapped names (`claude` → `claude-code`, `gemini` → `gemini-cli`)
 3. Installs `engram` via Homebrew and configures it for each selected CLI
 4. Optionally initializes `ghagga` for code review
 5. Writes a manifest to `~/.javidots/manifest.json`
