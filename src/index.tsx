@@ -16,6 +16,7 @@ import Mcp from './ui/Mcp.js'
 import Stats from './ui/Stats.js'
 import Tokens from './ui/Tokens.js'
 import Nano from './ui/Nano.js'
+import Security from './ui/Security.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -37,6 +38,8 @@ const cli = meow(`
     mcp              Bootstrap default MCP servers for Claude
     tokens           Show current session token usage breakdown
     nano <desc>      SDD-lite: challenge, plan, build, review (inline)
+    security         Install Claude Code runtime security hooks
+    security audit   Show current security hook coverage
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
@@ -73,6 +76,8 @@ const cli = meow(`
     $ javidots profile list
     $ javidots profile delete old-profile
     $ javidots nano "add retry logic to fetch helper"
+    $ javidots security
+    $ javidots security audit
     $ javidots doctor
     $ javidots esp
     $ javidots update
@@ -161,6 +166,18 @@ switch (subcommand) {
     render(
       <CIProvider isCI={isCI}>
         <Nano description={nanoDesc} />
+      </CIProvider>,
+      { stdin: inkStdin }
+    )
+    break
+  }
+
+  case 'security': {
+    const securityAction = cli.input[1]
+    const securityMode = securityAction === 'audit' ? 'audit' as const : 'install' as const
+    render(
+      <CIProvider isCI={isCI}>
+        <Security mode={securityMode} dryRun={cli.flags.dryRun} />
       </CIProvider>,
       { stdin: inkStdin }
     )
