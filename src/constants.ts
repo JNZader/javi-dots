@@ -80,6 +80,44 @@ export const DEFAULT_MCP_SERVERS: Array<{
   },
 ]
 
+// ── Security Hooks ────────────────────────────────────────────────────
+export const SECURITY_RULES_PATH = path.join(MANIFEST_DIR, 'security-rules.json')
+export const SECURITY_GUARD_PATH = path.join(MANIFEST_DIR, 'security-guard.sh')
+
+export const ALL_SECURITY_CATEGORIES = [
+  'destructive',
+  'remote-exec',
+  'reverse-shell',
+  'credential-read',
+] as const
+
+export const DEFAULT_SECURITY_RULES: Array<{
+  id: string
+  pattern: string
+  category: typeof ALL_SECURITY_CATEGORIES[number]
+  description: string
+  enabled: boolean
+}> = [
+  // Destructive
+  { id: 'rm-rf-root', pattern: 'rm\\s+-rf\\s+/', category: 'destructive', description: 'Block rm -rf on root paths', enabled: true },
+  { id: 'rm-rf-home', pattern: 'rm\\s+-rf\\s+~', category: 'destructive', description: 'Block rm -rf on home directory', enabled: true },
+  { id: 'mkfs', pattern: 'mkfs\\.', category: 'destructive', description: 'Block filesystem format commands', enabled: true },
+  { id: 'dd-if', pattern: 'dd\\s+if=', category: 'destructive', description: 'Block dd disk write commands', enabled: true },
+  { id: 'chmod-777', pattern: 'chmod\\s+777', category: 'destructive', description: 'Block chmod 777 (world-writable)', enabled: true },
+  // Remote execution
+  { id: 'curl-pipe-bash', pattern: 'curl.*\\|.*(?:bash|sh|zsh)', category: 'remote-exec', description: 'Block curl piped to shell', enabled: true },
+  { id: 'wget-pipe-bash', pattern: 'wget.*\\|.*(?:bash|sh|zsh)', category: 'remote-exec', description: 'Block wget piped to shell', enabled: true },
+  // Reverse shells
+  { id: 'bash-dev-tcp', pattern: 'bash\\s+-i.*\\/dev\\/tcp', category: 'reverse-shell', description: 'Block bash reverse shell via /dev/tcp', enabled: true },
+  { id: 'nc-exec', pattern: 'nc\\s+.*-e\\s+\\/bin', category: 'reverse-shell', description: 'Block netcat reverse shell', enabled: true },
+  { id: 'python-socket', pattern: 'python.*socket.*connect', category: 'reverse-shell', description: 'Block python reverse shell', enabled: true },
+  // Credential reads
+  { id: 'cat-ssh-key', pattern: 'cat.*\\.ssh\\/id_', category: 'credential-read', description: 'Block reading SSH private keys', enabled: true },
+  { id: 'cat-env-file', pattern: 'cat.*\\.env(?:\\s|$)', category: 'credential-read', description: 'Block reading .env files', enabled: true },
+  { id: 'cat-aws-creds', pattern: 'cat.*\\.aws\\/credentials', category: 'credential-read', description: 'Block reading AWS credentials', enabled: true },
+  { id: 'cat-netrc', pattern: 'cat.*\\.netrc', category: 'credential-read', description: 'Block reading .netrc file', enabled: true },
+]
+
 export const CLI_OPTIONS: Array<{ id: AI_CLI; label: string }> = [
   { id: 'claude', label: 'Claude Code' },
   { id: 'opencode', label: 'OpenCode' },

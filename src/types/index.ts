@@ -164,3 +164,24 @@ export interface NanoResult {
   phases: NanoPhase[]
   skillPath: string | null
 }
+
+// ── Security Hooks ──────────────────────────────────────────────────────
+
+export type SecurityCategory = 'destructive' | 'remote-exec' | 'reverse-shell' | 'credential-read' | 'custom'
+
+export interface SecurityRule {
+  id: string
+  pattern: string
+  category: SecurityCategory
+  description: string
+  enabled: boolean
+}
+
+export interface SecurityAuditResult {
+  totalRules: number
+  enabledRules: number
+  categories: Array<{ category: string; count: number }>
+  hookInstalled: boolean
+  guardScriptExists: boolean
+  missingCategories: string[]
+}
