@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream'
 import meow from 'meow'
 import App from './ui/App.js'
 import Doctor from './ui/Doctor.js'
+import Health from './ui/Health.js'
 import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
@@ -32,6 +33,7 @@ const cli = meow(`
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
+    health           Audit AI agent configuration quality
     update           Re-run setup for previously configured CLIs
     uninstall        Remove javidots managed files
 
@@ -146,6 +148,11 @@ switch (subcommand) {
 
   case 'doctor': {
     render(<CIProvider isCI={isCI}><Doctor /></CIProvider>, { stdin: inkStdin })
+    break
+  }
+
+  case 'health': {
+    render(<CIProvider isCI={isCI}><Health /></CIProvider>, { stdin: inkStdin })
     break
   }
 
