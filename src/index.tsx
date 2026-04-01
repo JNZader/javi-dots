@@ -15,6 +15,7 @@ import Prompt from './ui/Prompt.js'
 import Mcp from './ui/Mcp.js'
 import Stats from './ui/Stats.js'
 import Tokens from './ui/Tokens.js'
+import Nano from './ui/Nano.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -35,6 +36,7 @@ const cli = meow(`
     prompt add       Create a new prompt
     mcp              Bootstrap default MCP servers for Claude
     tokens           Show current session token usage breakdown
+    nano <desc>      SDD-lite: challenge, plan, build, review (inline)
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
@@ -70,6 +72,7 @@ const cli = meow(`
     $ javidots profile switch frontend
     $ javidots profile list
     $ javidots profile delete old-profile
+    $ javidots nano "add retry logic to fetch helper"
     $ javidots doctor
     $ javidots esp
     $ javidots update
@@ -150,6 +153,17 @@ switch (subcommand) {
 
   case 'tokens': {
     render(<CIProvider isCI={isCI}><Tokens /></CIProvider>, { stdin: inkStdin })
+    break
+  }
+
+  case 'nano': {
+    const nanoDesc = cli.input.slice(1).join(' ')
+    render(
+      <CIProvider isCI={isCI}>
+        <Nano description={nanoDesc} />
+      </CIProvider>,
+      { stdin: inkStdin }
+    )
     break
   }
 
