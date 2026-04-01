@@ -140,3 +140,27 @@ export interface McpSetupResult {
   results: McpServerResult[]
   configPath: string
 }
+
+// ── Nano Mode (SDD-lite) ─────────────────────────────────────────────────
+
+export type NanoPhaseId = 'challenge' | 'plan' | 'build' | 'review'
+
+export interface NanoPhase {
+  id: NanoPhaseId
+  label: string
+  status: 'pending' | 'running' | 'done' | 'error' | 'escalated'
+  detail?: string
+}
+
+export interface NanoResult {
+  description: string
+  slug: string
+  risk: 'low' | 'medium' | 'high'
+  filesModified: number
+  filesCreated: number
+  testsPassed: boolean
+  escalated: boolean
+  escalationReason?: string
+  phases: NanoPhase[]
+  skillPath: string | null
+}
