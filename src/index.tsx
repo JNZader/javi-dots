@@ -14,6 +14,7 @@ import Profile from './ui/Profile.js'
 import Prompt from './ui/Prompt.js'
 import Mcp from './ui/Mcp.js'
 import Stats from './ui/Stats.js'
+import Tokens from './ui/Tokens.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
 
@@ -33,6 +34,7 @@ const cli = meow(`
     prompt show      Display a prompt's content
     prompt add       Create a new prompt
     mcp              Bootstrap default MCP servers for Claude
+    tokens           Show current session token usage breakdown
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
@@ -143,6 +145,11 @@ switch (subcommand) {
 
   case 'mcp': {
     render(<CIProvider isCI={isCI}><Mcp dryRun={cli.flags.dryRun} /></CIProvider>, { stdin: inkStdin })
+    break
+  }
+
+  case 'tokens': {
+    render(<CIProvider isCI={isCI}><Tokens /></CIProvider>, { stdin: inkStdin })
     break
   }
 
