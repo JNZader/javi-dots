@@ -6,6 +6,7 @@ import meow from 'meow'
 import App from './ui/App.js'
 import Doctor from './ui/Doctor.js'
 import Health from './ui/Health.js'
+import Esp from './ui/Esp.js'
 import Update from './ui/Update.js'
 import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
@@ -34,6 +35,7 @@ const cli = meow(`
     versions         Show installed agent versions
     doctor           Show health report of current installation
     health           Audit AI agent configuration quality
+    esp              Set up Claude ESP tmux integration
     update           Re-run setup for previously configured CLIs
     uninstall        Remove javidots managed files
 
@@ -65,6 +67,7 @@ const cli = meow(`
     $ javidots profile list
     $ javidots profile delete old-profile
     $ javidots doctor
+    $ javidots esp
     $ javidots update
     $ javidots uninstall
 `, {
@@ -153,6 +156,11 @@ switch (subcommand) {
 
   case 'health': {
     render(<CIProvider isCI={isCI}><Health /></CIProvider>, { stdin: inkStdin })
+    break
+  }
+
+  case 'esp': {
+    render(<CIProvider isCI={isCI}><Esp /></CIProvider>, { stdin: inkStdin })
     break
   }
 

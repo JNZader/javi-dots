@@ -15,6 +15,11 @@ export const SYNC_STATE_PATH = path.join(MANIFEST_DIR, 'sync-state.json')
 export const PROFILES_DIR = path.join(MANIFEST_DIR, 'profiles')
 export const PROFILES_STATE_PATH = path.join(MANIFEST_DIR, 'profiles-state.json')
 
+// ── ESP (Claude ESP Tmux Integration) ─────────────────────────────────────
+export const TMUX_CONF_PATH = path.join(HOME, '.tmux.conf')
+export const ESP_TOGGLE_SCRIPT_PATH = path.join(MANIFEST_DIR, 'esp-toggle.sh')
+export const ESP_BINDING_LINE = `bind-key C-e run-shell "${ESP_TOGGLE_SCRIPT_PATH}"`
+
 // ── Health Check Paths ─────────────────────────────────────────────────────
 export const CLAUDE_MD_PATH = path.join(HOME, '.claude', 'CLAUDE.md')
 export const SKILLS_DIR = path.join(HOME, '.claude', 'skills')
