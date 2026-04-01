@@ -206,9 +206,9 @@ describe('runSetup', () => {
         (c: unknown[]) => c[0] === 'bash' && (c[1] as string[]).includes('--agent'),
       )
       expect(bashCalls).toHaveLength(3)
-      expect((bashCalls[0][1] as string[])[2]).toBe('claude')
+      expect((bashCalls[0][1] as string[])[2]).toBe('claude-code')
       expect((bashCalls[1][1] as string[])[2]).toBe('opencode')
-      expect((bashCalls[2][1] as string[])[2]).toBe('gemini')
+      expect((bashCalls[2][1] as string[])[2]).toBe('gemini-cli')
     })
 
     it('clone failure: emits error', async () => {
