@@ -92,6 +92,7 @@ graph LR
     subgraph "~/.javidots/"
         MF["manifest.json"]
         ATL["agent-teams-lite/"]
+        ESP["esp-toggle.sh"]
     end
 
     subgraph "~/.claude/ (or other CLI config)"
@@ -99,6 +100,10 @@ graph LR
         AG["agents/"]
         CF["config files"]
         HK["hooks/"]
+    end
+
+    subgraph "~/.wolf/"
+        WS["sessions/*.jsonl"]
     end
 
     subgraph "System"
@@ -115,7 +120,28 @@ graph LR
     AI --> HK
     DOTS -->|"brew install"| ENG
     DOTS -->|"optional"| GHA
+    DOTS -->|"health audit"| SK
+    DOTS -->|"health audit"| HK
+    DOTS -->|"esp toggle"| ESP
+    DOTS -->|"token ledger"| WS
 ```
+
+## Orchestrator Modules
+
+The `src/orchestrator/` directory contains the implementation for each command:
+
+| Module | Command | Description |
+|--------|---------|-------------|
+| `index.ts` | `setup` | Main setup orchestrator |
+| `doctor.ts` | `doctor` | Installation health check |
+| `update.ts` | `update` | Re-run setup from manifest |
+| `uninstall.ts` | `uninstall` | Clean removal |
+| `health.ts` | `health` | AI config quality audit |
+| `esp.ts` | `esp` | ESP tmux integration |
+| `mcp.ts` | `mcp` | MCP server auto-setup |
+| `tokens.ts` | `tokens` | Token tracking and reporting |
+| `nano.ts` | `nano` | SDD-lite inline workflow |
+| `utils.ts` | — | Shared utilities (`which`, `readFileIfExists`, `tokenEstimate`) |
 
 ## Manifest Format
 

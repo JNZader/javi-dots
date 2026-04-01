@@ -57,6 +57,18 @@ npx javi-dots --preset minimal
 npx javi-dots
 ```
 
+## Post-Setup Commands
+
+Beyond setup, `javi-dots` includes utilities for ongoing maintenance:
+
+| Command | Description |
+|---------|-------------|
+| `health` | Audit CLAUDE.md, skills, MCP config, and hooks for quality issues |
+| `esp` | Install Claude ESP tmux toggle (Ctrl-e split pane) |
+| `mcp` | Bootstrap default MCP servers (engram, filesystem, glance) |
+| `tokens` | Token usage report from `.wolf/` ledger with repeated read detection |
+| `nano <desc>` | SDD-lite inline workflow (challenge, plan, build, review) |
+
 ## Supported AI CLIs
 
 | CLI | Description |

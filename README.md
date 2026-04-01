@@ -67,12 +67,22 @@ All commands work in non-TTY environments (pipes, subprocesses).
 | `doctor` | Show health report of current installation |
 | `update` | Re-run setup for previously configured CLIs |
 | `uninstall` | Remove javi-dots managed files and manifests |
+| `health` | Audit AI agent config quality (CLAUDE.md, skills, MCP, hooks) |
+| `esp` | Claude ESP tmux integration (toggle split pane with ESP watcher) |
+| `mcp` | MCP server auto-setup (bootstraps default servers: engram, filesystem, glance) |
+| `tokens` | Token tracking with `.wolf/` ledger, repeated read detection |
+| `nano <desc>` | SDD-lite inline workflow (challenge, plan, build, review) |
 
 ```bash
 npx javi-dots setup        # same as just: npx javi-dots
 npx javi-dots doctor       # check installation health
 npx javi-dots update       # re-apply with same config
 npx javi-dots uninstall    # clean removal
+npx javi-dots health       # audit CLAUDE.md, skills, MCP config, hooks
+npx javi-dots esp          # install ESP tmux toggle (Ctrl-e)
+npx javi-dots mcp          # bootstrap default MCP servers
+npx javi-dots tokens       # show token usage report from .wolf/ ledger
+npx javi-dots nano "add error boundary"  # SDD-lite: challenge → plan → build → review
 ```
 
 ## CLI Flags
