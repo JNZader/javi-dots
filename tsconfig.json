@@ -5,6 +5,7 @@
     "moduleResolution": "NodeNext",
     "jsx": "react",
     "jsxFactory": "React.createElement",
+    "jsxFragmentFactory": "React.Fragment",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,

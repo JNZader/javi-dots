@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Box, Text, useApp } from 'ink'
 import { runSecurityInstall, runSecurityAudit } from '../orchestrator/security.js'
-import type { SecurityInstallResult, SecurityAuditResult } from '../orchestrator/security.js'
+import type { SecurityInstallResult } from '../orchestrator/security.js'
+import type { SecurityAuditResult } from '../types/index.js'
 import Header from './Header.js'
 import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
@@ -87,7 +88,7 @@ export default function Security({ mode, dryRun }: SecurityProps) {
           {auditResult.categories.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold>Coverage by category:</Text>
-              {auditResult.categories.map(c => (
+              {auditResult.categories.map((c: { category: string; count: number }) => (
                 <Text key={c.category}>
                   {'  '}{glyph.check} {c.category}: {c.count} {c.count === 1 ? 'rule' : 'rules'}
                 </Text>
@@ -98,7 +99,7 @@ export default function Security({ mode, dryRun }: SecurityProps) {
           {auditResult.missingCategories.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold color={theme.warning}>Missing categories:</Text>
-              {auditResult.missingCategories.map(c => (
+              {auditResult.missingCategories.map((c: string) => (
                 <Text key={c} color={theme.warning}>
                   {'  '}{glyph.cross} {c}
                 </Text>
