@@ -101,6 +101,35 @@ export interface McpServerDef {
 
 export type McpServerStatus = 'installed' | 'already-present' | 'failed'
 
+// ── Token Tracking (Wolf) ─────────────────────────────────────────────────
+
+export type TokenEventType =
+  | 'session-start'
+  | 'file-read'
+  | 'tool-call'
+  | 'thinking'
+  | 'output'
+  | 'session-end'
+
+export interface TokenEvent {
+  type: TokenEventType
+  timestamp: number
+  file?: string
+  tokens?: number
+  tool?: string
+  detail?: string
+  repeatedRead?: boolean
+}
+
+export interface SessionReport {
+  sessionId: string
+  events: number
+  byType: Record<string, number>
+  topFiles: Array<{ file: string; reads: number }>
+  repeatedReads: string[]
+  totalTokens: number
+}
+
 export interface McpServerResult {
   server: McpServerDef
   status: McpServerStatus

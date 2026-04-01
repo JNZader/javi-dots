@@ -15,6 +15,11 @@ export const SYNC_STATE_PATH = path.join(MANIFEST_DIR, 'sync-state.json')
 export const PROFILES_DIR = path.join(MANIFEST_DIR, 'profiles')
 export const PROFILES_STATE_PATH = path.join(MANIFEST_DIR, 'profiles-state.json')
 
+// ── Wolf (Token Tracking) ─────────────────────────────────────────────────
+export const WOLF_DIR = path.join(HOME, '.wolf')
+export const WOLF_SESSIONS_DIR = path.join(WOLF_DIR, 'sessions')
+export const REPEATED_READ_THRESHOLD = 3
+
 // ── ESP (Claude ESP Tmux Integration) ─────────────────────────────────────
 export const TMUX_CONF_PATH = path.join(HOME, '.tmux.conf')
 export const ESP_TOGGLE_SCRIPT_PATH = path.join(MANIFEST_DIR, 'esp-toggle.sh')
