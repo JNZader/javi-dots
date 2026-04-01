@@ -15,6 +15,32 @@ export const SYNC_STATE_PATH = path.join(MANIFEST_DIR, 'sync-state.json')
 export const PROFILES_DIR = path.join(MANIFEST_DIR, 'profiles')
 export const PROFILES_STATE_PATH = path.join(MANIFEST_DIR, 'profiles-state.json')
 
+// ── Health Check Paths ─────────────────────────────────────────────────────
+export const CLAUDE_MD_PATH = path.join(HOME, '.claude', 'CLAUDE.md')
+export const SKILLS_DIR = path.join(HOME, '.claude', 'skills')
+export const MCP_CONFIG_PATHS = [
+  path.join(HOME, '.claude.json'),
+  path.join(HOME, '.config', 'Claude', 'claude_desktop_config.json'),
+]
+export const SETTINGS_PATH = path.join(HOME, '.claude', 'settings.json')
+
+// ── Health Check Thresholds ────────────────────────────────────────────────
+export const CLAUDE_MD_TOKEN_LIMIT = 5000
+export const MAX_SKILL_SIZE = 50_000 // bytes
+export const DANGEROUS_COMMANDS = [
+  'rm -rf',
+  'git push --force',
+  'git push -f',
+  'git reset --hard',
+  'git checkout .',
+  'git clean -f',
+  'git restore .',
+  'rm -r /',
+  'dd if=',
+  'mkfs.',
+  ':(){',
+]
+
 export const CLI_OPTIONS: Array<{ id: AI_CLI; label: string }> = [
   { id: 'claude', label: 'Claude Code' },
   { id: 'opencode', label: 'OpenCode' },

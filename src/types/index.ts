@@ -78,3 +78,14 @@ export interface ProfilesState {
   active: string | null
   profiles: Record<string, Profile>
 }
+
+// ── Health Check ───────────────────────────────────────────────────────────
+
+export type HealthSeverity = 'critical' | 'structural' | 'incremental'
+
+export interface HealthFinding {
+  category: 'claude-md' | 'skills' | 'mcp' | 'hooks'
+  severity: HealthSeverity
+  message: string
+  fix: string
+}

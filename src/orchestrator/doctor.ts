@@ -1,20 +1,8 @@
-import { execFile } from 'child_process'
-import { promisify } from 'util'
 import fs from 'fs'
 import path from 'path'
 import type { DoctorCheck, Manifest } from '../types/index.js'
 import { MANIFEST_DIR, MANIFEST_PATH } from '../constants.js'
-
-const execFileAsync = promisify(execFile)
-
-async function which(bin: string): Promise<string | null> {
-  try {
-    const { stdout } = await execFileAsync('which', [bin])
-    return stdout.trim() || null
-  } catch {
-    return null
-  }
-}
+import { which } from './utils.js'
 
 export async function runDoctor(): Promise<{
   manifest: Manifest | null
