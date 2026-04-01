@@ -46,6 +46,35 @@ export const DANGEROUS_COMMANDS = [
   ':(){',
 ]
 
+// ── MCP Auto-Setup ────────────────────────────────────────────────────────
+export const CLAUDE_JSON_PATH = path.join(HOME, '.claude.json')
+
+export const DEFAULT_MCP_SERVERS: Array<{
+  name: string
+  npmPackage: string
+  command: string
+  args: string[]
+}> = [
+  {
+    name: 'engram',
+    npmPackage: '@anthropic/engram-mcp',
+    command: 'engram',
+    args: ['mcp'],
+  },
+  {
+    name: 'filesystem',
+    npmPackage: '@anthropic/filesystem-mcp',
+    command: 'npx',
+    args: ['-y', '@anthropic/filesystem-mcp'],
+  },
+  {
+    name: 'glance',
+    npmPackage: '@anthropic/glance-mcp',
+    command: 'npx',
+    args: ['-y', '@anthropic/glance-mcp'],
+  },
+]
+
 export const CLI_OPTIONS: Array<{ id: AI_CLI; label: string }> = [
   { id: 'claude', label: 'Claude Code' },
   { id: 'opencode', label: 'OpenCode' },

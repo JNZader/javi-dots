@@ -89,3 +89,25 @@ export interface HealthFinding {
   message: string
   fix: string
 }
+
+// ── MCP Auto-Setup ────────────────────────────────────────────────────────
+
+export interface McpServerDef {
+  name: string
+  npmPackage: string
+  command: string
+  args: string[]
+}
+
+export type McpServerStatus = 'installed' | 'already-present' | 'failed'
+
+export interface McpServerResult {
+  server: McpServerDef
+  status: McpServerStatus
+  detail?: string
+}
+
+export interface McpSetupResult {
+  results: McpServerResult[]
+  configPath: string
+}

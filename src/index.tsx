@@ -12,6 +12,7 @@ import Uninstall from './ui/Uninstall.js'
 import Sync from './ui/Sync.js'
 import Profile from './ui/Profile.js'
 import Prompt from './ui/Prompt.js'
+import Mcp from './ui/Mcp.js'
 import Stats from './ui/Stats.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI } from './types/index.js'
@@ -31,6 +32,7 @@ const cli = meow(`
     prompt list      List all prompts (or by domain)
     prompt show      Display a prompt's content
     prompt add       Create a new prompt
+    mcp              Bootstrap default MCP servers for Claude
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
@@ -136,6 +138,11 @@ switch (subcommand) {
       </CIProvider>,
       { stdin: inkStdin }
     )
+    break
+  }
+
+  case 'mcp': {
+    render(<CIProvider isCI={isCI}><Mcp dryRun={cli.flags.dryRun} /></CIProvider>, { stdin: inkStdin })
     break
   }
 
