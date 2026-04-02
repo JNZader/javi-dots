@@ -59,6 +59,7 @@ function collectSteps(steps: SetupStep[]) {
 const defaultOpts: SetupOptions = {
   clis: ['claude', 'opencode'],
   ghagga: false,
+  kiteguard: false,
   dryRun: false,
 }
 
@@ -312,7 +313,7 @@ describe('runSetup', () => {
       })
       ;(fs.existsSync as Mock).mockReturnValue(false)
       const steps: SetupStep[] = []
-      await runSetup({ clis: ['claude'], ghagga: false, dryRun: false }, collectSteps(steps))
+      await runSetup({ clis: ['claude'], ghagga: false, kiteguard: false, dryRun: false }, collectSteps(steps))
 
       const calls = (execFile as unknown as Mock).mock.calls
       const engramSetupCall = calls.find(

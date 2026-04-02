@@ -3,6 +3,7 @@ export type AI_CLI = 'claude' | 'opencode' | 'gemini' | 'qwen' | 'codex' | 'copi
 export interface SetupOptions {
   clis: AI_CLI[]
   ghagga: boolean
+  kiteguard: boolean
   dryRun: boolean
 }
 
@@ -29,6 +30,7 @@ export interface Manifest {
   engram: boolean
   sdd: boolean
   ghagga: boolean
+  kiteguard: boolean
 }
 
 // ── Multi-Editor Config Sync ────────────────────────────────────────────────

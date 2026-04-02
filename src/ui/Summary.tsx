@@ -10,9 +10,10 @@ interface Props {
   selectedClis?: AI_CLI[]
   elapsedMs?: number
   ghagga?: boolean
+  kiteguard?: boolean
 }
 
-export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga }: Props) {
+export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga, kiteguard }: Props) {
   const { exit } = useApp()
   const isCI = useCIMode()
 
@@ -86,6 +87,9 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
         <Text color={theme.muted}>{'    Check health:         '}<Text color={theme.white}>npx javidots doctor</Text></Text>
         {!ghagga && (
           <Text color={theme.muted}>{'    Add code review:      '}<Text color={theme.white}>npx javidots --ghagga</Text></Text>
+        )}
+        {!kiteguard && (
+          <Text color={theme.muted}>{'    Add runtime security: '}<Text color={theme.white}>npx javidots --kiteguard</Text></Text>
         )}
       </Box>
 

@@ -80,6 +80,11 @@ export const DEFAULT_MCP_SERVERS: Array<{
   },
 ]
 
+// ── Kiteguard (Runtime Security) ──────────────────────────────────────
+export const KITEGUARD_REPO_URL = 'https://github.com/DhivakaranRavi/kiteguard'
+export const KITEGUARD_HOOKS = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop'] as const
+export type KiteguardHookType = typeof KITEGUARD_HOOKS[number]
+
 // ── Security Hooks ────────────────────────────────────────────────────
 export const SECURITY_RULES_PATH = path.join(MANIFEST_DIR, 'security-rules.json')
 export const SECURITY_GUARD_PATH = path.join(MANIFEST_DIR, 'security-guard.sh')

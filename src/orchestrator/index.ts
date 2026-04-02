@@ -23,7 +23,7 @@ async function commandExists(cmd: string): Promise<boolean> {
 }
 
 export async function runSetup(options: SetupOptions, onStep: StepCallback): Promise<void> {
-  const { clis, ghagga, dryRun } = options
+  const { clis, ghagga, kiteguard, dryRun } = options
   const cliList = clis.join(',')
 
   // Step 1: Install javi-ai for selected CLIs
@@ -129,7 +129,7 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
         report(onStep, 'ghagga', 'Configure code review (ghagga)', 'skipped',
           'ghagga not installed. Get it: https://github.com/JNZader/ghagga')
         // Write manifest anyway
-        writeManifest(clis, ghagga, dryRun)
+        writeManifest(clis, ghagga, kiteguard, dryRun)
         report(onStep, 'manifest', 'Save configuration', 'done')
         return
       }
@@ -142,12 +142,20 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     report(onStep, 'ghagga', 'Configure code review (ghagga)', 'skipped', 'Not selected')
   }
 
-  // Step 5: Write manifest
-  writeManifest(clis, ghagga, dryRun)
+  // Step 5: Configure kiteguard — OPTIONAL
+  if (kiteguard) {
+    const { runKiteguardSetup } = await import('./kiteguard.js')
+    await runKiteguardSetup(dryRun, onStep)
+  } else {
+    report(onStep, 'kiteguard', 'Configure runtime security (kiteguard)', 'skipped', 'Not selected')
+  }
+
+  // Step 6: Write manifest
+  writeManifest(clis, ghagga, kiteguard, dryRun)
   report(onStep, 'manifest', 'Save configuration', 'done')
 }
 
-function writeManifest(clis: SetupOptions['clis'], ghagga: boolean, dryRun: boolean): void {
+function writeManifest(clis: SetupOptions['clis'], ghagga: boolean, kiteguard: boolean, dryRun: boolean): void {
   if (!dryRun) {
     const manifest: Manifest = {
       version: '0.1.0',
@@ -157,6 +165,7 @@ function writeManifest(clis: SetupOptions['clis'], ghagga: boolean, dryRun: bool
       engram: true,
       sdd: true,
       ghagga,
+      kiteguard,
     }
     fs.mkdirSync(MANIFEST_DIR, { recursive: true })
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2))

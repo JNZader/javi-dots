@@ -53,6 +53,8 @@ const cli = meow(`
     --cli           Comma-separated list of CLIs (claude,opencode,gemini,qwen,codex,copilot)
     --ghagga        Enable ghagga code review
     --no-ghagga     Disable ghagga code review
+    --kiteguard     Enable kiteguard runtime security
+    --no-kiteguard  Disable kiteguard runtime security
     --preset        Preset: full, minimal, custom (default: custom)
     --version       Show version
     --help          Show this help
@@ -88,6 +90,7 @@ const cli = meow(`
     dryRun: { type: 'boolean', default: false },
     cli: { type: 'string', default: '' },
     ghagga: { type: 'boolean' },
+    kiteguard: { type: 'boolean' },
     preset: { type: 'string', default: 'custom' },
   }
 })
@@ -224,15 +227,18 @@ switch (subcommand) {
     // Determine CLIs from --cli flag or --preset
     let preselectedClis: AI_CLI[] | undefined
     let presetGhagga: boolean | undefined
+    let presetKiteguard: boolean | undefined
     let skipTUI = false
 
     if (cli.flags.preset === 'full') {
       preselectedClis = ALL_CLIS
       presetGhagga = true
+      presetKiteguard = true
       skipTUI = true
     } else if (cli.flags.preset === 'minimal') {
       preselectedClis = ['claude']
       presetGhagga = false
+      presetKiteguard = false
       skipTUI = true
     } else if (cli.flags.cli) {
       preselectedClis = cli.flags.cli.split(',').map(s => s.trim()) as AI_CLI[]
@@ -244,8 +250,14 @@ switch (subcommand) {
       presetGhagga = cli.flags.ghagga
     }
 
-    // If both clis and ghagga are set via flags (non-preset), skip TUI
-    if (preselectedClis && presetGhagga !== undefined && cli.flags.preset === 'custom') {
+    // --kiteguard / --no-kiteguard override preset (only when explicitly passed)
+    const kiteguardExplicit = process.argv.includes('--kiteguard') || process.argv.includes('--no-kiteguard')
+    if (kiteguardExplicit) {
+      presetKiteguard = cli.flags.kiteguard
+    }
+
+    // If both clis and ghagga+kiteguard are set via flags (non-preset), skip TUI
+    if (preselectedClis && presetGhagga !== undefined && presetKiteguard !== undefined && cli.flags.preset === 'custom') {
       skipTUI = true
     }
 
@@ -255,6 +267,7 @@ switch (subcommand) {
           dryRun={cli.flags.dryRun}
           preselectedClis={preselectedClis}
           presetGhagga={presetGhagga}
+          presetKiteguard={presetKiteguard}
           skipTUI={skipTUI}
         />
       </CIProvider>,

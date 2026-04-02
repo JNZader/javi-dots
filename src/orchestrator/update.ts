@@ -18,6 +18,7 @@ export async function runUpdate(
   await runSetup({
     clis: manifest.clis,
     ghagga: manifest.ghagga,
+    kiteguard: manifest.kiteguard ?? false,
     dryRun,
   }, onStep)
 

@@ -7,12 +7,13 @@ import { theme, glyph } from './theme.js'
 interface Props {
   clis: AI_CLI[]
   ghagga: boolean
+  kiteguard: boolean
   dryRun: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel }: Props) {
+export default function Confirmation({ clis, ghagga, kiteguard, dryRun, onConfirm, onCancel }: Props) {
   const isCI = useCIMode()
   const autoConfirmed = useRef(false)
 
@@ -58,6 +59,14 @@ export default function Confirmation({ clis, ghagga, dryRun, onConfirm, onCancel
             <Text color={theme.success}>ghagga {glyph.check} enabled</Text>
           ) : (
             <Text color={theme.muted}>ghagga {glyph.cross} skipped</Text>
+          )}
+        </Box>
+        <Box>
+          <Text color={theme.muted}>{'  Security:     '}</Text>
+          {kiteguard ? (
+            <Text color={theme.success}>kiteguard {glyph.check} enabled</Text>
+          ) : (
+            <Text color={theme.muted}>kiteguard {glyph.cross} skipped</Text>
           )}
         </Box>
       </Box>

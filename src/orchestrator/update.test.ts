@@ -32,6 +32,7 @@ const validManifest: Manifest = {
   engram: true,
   sdd: true,
   ghagga: true,
+  kiteguard: false,
 }
 
 function collectSteps(steps: SetupStep[]) {
@@ -76,6 +77,7 @@ describe('runUpdate', () => {
       {
         clis: ['claude', 'opencode'],
         ghagga: true,
+        kiteguard: false,
         dryRun: false,
       },
       expect.any(Function),
