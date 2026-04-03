@@ -105,6 +105,12 @@ export const DEFAULT_MCP_SERVERS: Array<{
   },
 ]
 
+// ── Telemetry ─────────────────────────────────────────────────────────
+export const TELEMETRY_CACHE_PATH = path.join(MANIFEST_DIR, 'telemetry.json')
+export const TELEMETRY_CACHE_VERSION = 1
+export const CLAUDE_PROJECTS_DIR = path.join(HOME, '.claude', 'projects')
+export const TELEMETRY_PERIODS = ['daily', 'weekly', 'monthly'] as const
+
 // ── Kiteguard (Runtime Security) ──────────────────────────────────────
 export const KITEGUARD_REPO_URL = 'https://github.com/DhivakaranRavi/kiteguard'
 export const KITEGUARD_HOOKS = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop'] as const

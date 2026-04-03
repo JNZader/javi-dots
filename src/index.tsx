@@ -17,8 +17,9 @@ import Stats from './ui/Stats.js'
 import Tokens from './ui/Tokens.js'
 import Nano from './ui/Nano.js'
 import Security from './ui/Security.js'
+import Telemetry from './ui/Telemetry.js'
 import { CIProvider } from './ui/CIContext.js'
-import type { AI_CLI } from './types/index.js'
+import type { AI_CLI, TelemetryMode } from './types/index.js'
 
 const cli = meow(`
   Usage
@@ -40,6 +41,10 @@ const cli = meow(`
     nano <desc>      SDD-lite: challenge, plan, build, review (inline)
     security         Install Claude Code runtime security hooks
     security audit   Show current security hook coverage
+    telemetry        Persistent session telemetry with caching
+    telemetry sessions  List recent sessions with details
+    telemetry daily     Daily aggregation view
+    telemetry weekly    Weekly aggregation view
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
     doctor           Show health report of current installation
@@ -181,6 +186,21 @@ switch (subcommand) {
     render(
       <CIProvider isCI={isCI}>
         <Security mode={securityMode} dryRun={cli.flags.dryRun} />
+      </CIProvider>,
+      { stdin: inkStdin }
+    )
+    break
+  }
+
+  case 'telemetry': {
+    const telemetryAction = cli.input[1] as string | undefined
+    const VALID_TELEMETRY_MODES = ['summary', 'sessions', 'daily', 'weekly']
+    const telemetryMode: TelemetryMode = telemetryAction && VALID_TELEMETRY_MODES.includes(telemetryAction)
+      ? telemetryAction as TelemetryMode
+      : 'summary'
+    render(
+      <CIProvider isCI={isCI}>
+        <Telemetry mode={telemetryMode} />
       </CIProvider>,
       { stdin: inkStdin }
     )

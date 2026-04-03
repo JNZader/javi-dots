@@ -194,6 +194,54 @@ export interface NanoResult {
 
 // ── Security Hooks ──────────────────────────────────────────────────────
 
+// ── Telemetry ───────────────────────────────────────────────────────────
+
+export type TelemetryMode = 'summary' | 'sessions' | 'daily' | 'weekly'
+
+export interface TelemetrySession {
+  sessionId: string
+  projectDir: string
+  startTime: number
+  endTime: number
+  durationMinutes: number
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  totalCost: number
+  model: string
+  toolCalls: Record<string, number>
+  messageCount: number
+}
+
+export interface TelemetryCache {
+  version: number
+  lastScanAt: number
+  sessions: Record<string, TelemetrySession>
+}
+
+export interface TelemetryPeriodSummary {
+  period: string
+  sessionCount: number
+  totalTokens: number
+  totalCost: number
+  topModels: Array<{ model: string; count: number }>
+  topTools: Array<{ tool: string; count: number }>
+}
+
+export interface TelemetryReport {
+  sessions: TelemetrySession[]
+  totals: {
+    sessions: number
+    tokens: number
+    cost: number
+    duration: number
+  }
+  byPeriod: TelemetryPeriodSummary[]
+}
+
+// ── Security Hooks ──────────────────────────────────────────────────────
+
 export type SecurityCategory = 'destructive' | 'remote-exec' | 'reverse-shell' | 'credential-read' | 'custom'
 
 export interface SecurityRule {
