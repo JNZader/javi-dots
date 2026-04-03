@@ -20,7 +20,16 @@ vi.mock('fs', () => ({
 
 import { execFile } from 'child_process'
 import fs from 'fs'
-import { checkClaudeMd, checkSkills, checkMcpConfig, checkHooks, runHealth } from './health.js'
+import {
+  checkClaudeMd,
+  checkSkills,
+  checkMcpConfig,
+  checkHooks,
+  runHealth,
+  analyzeSignalToNoise,
+  computeTokenCosts,
+  computeScore,
+} from './health.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function mockReadFile(pathMap: Record<string, string | null>) {
@@ -378,18 +387,236 @@ describe('checkHooks', () => {
   })
 })
 
+// ── analyzeSignalToNoise ─────────────────────────────────────────────────────
+describe('analyzeSignalToNoise', () => {
+  it('returns high ratio for content with many actionable lines', () => {
+    const content = [
+      '- Rule one: always use strict mode',
+      '- Rule two: never skip tests',
+      '- Rule three: document everything',
+      '* Use TypeScript strict',
+      '1. First step instructions',
+      '| Column | Value |',
+      '| data1 | data2 |',
+      'key: value pair here',
+      '',
+      '# Header',
+    ].join('\n')
+
+    const result = analyzeSignalToNoise(content)
+    expect(result.ratio).toBeGreaterThanOrEqual(70)
+    expect(result.signalLines).toBeGreaterThan(result.noiseLines)
+    expect(result.totalLines).toBe(10)
+  })
+
+  it('returns low ratio for content with mostly filler', () => {
+    const content = [
+      '# Section One',
+      '',
+      'This is some prose that explains things in general terms.',
+      '',
+      '---',
+      '',
+      '# Section Two',
+      '',
+      'More general description without specific instructions.',
+      '',
+      '<!-- comment -->',
+      '',
+      '# Section Three',
+      '',
+      'Yet another paragraph of filler text.',
+      '',
+      '',
+      '',
+      '',
+      '- One actual rule here',
+    ].join('\n')
+
+    const result = analyzeSignalToNoise(content)
+    expect(result.ratio).toBeLessThanOrEqual(30)
+    expect(result.noiseLines).toBeGreaterThan(result.signalLines)
+  })
+
+  it('handles empty content', () => {
+    const result = analyzeSignalToNoise('')
+    expect(result.totalLines).toBe(1)
+    expect(result.ratio).toBe(0)
+  })
+
+  it('identifies code blocks as signal', () => {
+    const content = [
+      '```typescript',
+      'const x = 1',
+      '```',
+    ].join('\n')
+
+    const result = analyzeSignalToNoise(content)
+    // code block markers are signal
+    expect(result.signalLines).toBeGreaterThanOrEqual(2)
+  })
+})
+
+// ── computeTokenCosts ───────────────────────────────────────────────────────
+describe('computeTokenCosts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns entries for existing sources', () => {
+    ;(fs.existsSync as Mock).mockReturnValue(true)
+    ;(fs.readdirSync as Mock).mockReturnValue(['react-19', 'typescript'])
+    ;(fs.statSync as Mock).mockReturnValue({ isDirectory: () => true })
+    ;(fs.readFileSync as Mock).mockImplementation((p: string) => {
+      if (p.includes('CLAUDE.md')) return 'word '.repeat(100)
+      if (p.includes('SKILL.md')) return 'word '.repeat(50)
+      if (p.includes('settings.json')) return 'word '.repeat(20)
+      if (p.includes('.claude.json')) return 'word '.repeat(30)
+      throw new Error('ENOENT')
+    })
+
+    const result = computeTokenCosts()
+    expect(result.entries.length).toBeGreaterThan(0)
+    expect(result.total).toBeGreaterThan(0)
+
+    // Verify sorted descending
+    for (let i = 1; i < result.entries.length; i++) {
+      expect(result.entries[i - 1]!.tokens).toBeGreaterThanOrEqual(result.entries[i]!.tokens)
+    }
+  })
+
+  it('calculates correct percentages summing to total', () => {
+    ;(fs.existsSync as Mock).mockReturnValue(true)
+    ;(fs.readdirSync as Mock).mockReturnValue([])
+    ;(fs.readFileSync as Mock).mockImplementation((p: string) => {
+      if (p.includes('CLAUDE.md')) return 'word '.repeat(100)
+      throw new Error('ENOENT')
+    })
+
+    const result = computeTokenCosts()
+    const sum = result.entries.reduce((s, e) => s + e.tokens, 0)
+    expect(sum).toBe(result.total)
+  })
+
+  it('returns empty breakdown when no files exist', () => {
+    ;(fs.existsSync as Mock).mockReturnValue(false)
+    ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
+
+    const result = computeTokenCosts()
+    expect(result.entries).toHaveLength(0)
+    expect(result.total).toBe(0)
+  })
+})
+
+// ── computeScore ────────────────────────────────────────────────────────────
+describe('computeScore', () => {
+  it('returns 100 for zero findings with good S/N', () => {
+    const snr = { signalLines: 80, noiseLines: 20, totalLines: 100, ratio: 80 }
+    const score = computeScore([], snr)
+    // 100 + 5 (bonus) = 105, clamped to 100
+    expect(score).toBe(100)
+  })
+
+  it('returns 100 for zero findings and null S/N', () => {
+    const score = computeScore([], null)
+    expect(score).toBe(100)
+  })
+
+  it('deducts 15 per critical finding', () => {
+    const findings = [
+      { category: 'claude-md' as const, severity: 'critical' as const, message: 'a', fix: 'b' },
+      { category: 'claude-md' as const, severity: 'critical' as const, message: 'c', fix: 'd' },
+      { category: 'claude-md' as const, severity: 'critical' as const, message: 'e', fix: 'f' },
+    ]
+    const score = computeScore(findings, null)
+    // 100 - 3*15 = 55
+    expect(score).toBe(55)
+  })
+
+  it('floors at 0 for many critical findings', () => {
+    const findings = Array.from({ length: 10 }, () => ({
+      category: 'claude-md' as const,
+      severity: 'critical' as const,
+      message: 'x',
+      fix: 'y',
+    }))
+    const score = computeScore(findings, null)
+    // 100 - 10*15 = -50, clamped to 0
+    expect(score).toBe(0)
+  })
+
+  it('applies S/N bonus for high ratio', () => {
+    const snr = { signalLines: 80, noiseLines: 20, totalLines: 100, ratio: 75 }
+    // 1 structural finding: 100 - 8 + 5 = 97
+    const findings = [
+      { category: 'skills' as const, severity: 'structural' as const, message: 'x', fix: 'y' },
+    ]
+    const score = computeScore(findings, snr)
+    expect(score).toBe(97)
+  })
+
+  it('applies S/N penalty for low ratio', () => {
+    const snr = { signalLines: 10, noiseLines: 90, totalLines: 100, ratio: 10 }
+    const score = computeScore([], snr)
+    // 100 - 10 = 90
+    expect(score).toBe(90)
+  })
+
+  it('applies excessive token penalty', () => {
+    const score = computeScore([], null, 15_000)
+    // 100 - 10 = 90
+    expect(score).toBe(90)
+  })
+
+  it('combines all deductions correctly', () => {
+    const findings = [
+      { category: 'claude-md' as const, severity: 'critical' as const, message: 'a', fix: 'b' },
+      { category: 'skills' as const, severity: 'structural' as const, message: 'c', fix: 'd' },
+    ]
+    const snr = { signalLines: 10, noiseLines: 90, totalLines: 100, ratio: 10 }
+    const score = computeScore(findings, snr, 15_000)
+    // 100 - 15 - 8 - 10 (snr penalty) - 10 (token penalty) = 57
+    expect(score).toBe(57)
+  })
+})
+
 // ── runHealth ────────────────────────────────────────────────────────────────
 describe('runHealth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('returns empty array when everything is clean', async () => {
+  it('returns HealthReport with empty findings when everything is clean', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
-    const findings = await runHealth()
-    expect(findings).toHaveLength(0)
+    const report = await runHealth()
+    expect(report.findings).toHaveLength(0)
+    expect(report.score).toBe(100)
+    expect(report.tokenCosts).toBeDefined()
+    expect(report.tokenCosts.entries).toHaveLength(0)
+    expect(report.signalToNoise).toBeNull()
+  })
+
+  it('returns HealthReport shape with all required fields', async () => {
+    const content = '- A rule line here\n'.repeat(20)
+    ;(fs.readFileSync as Mock).mockImplementation((p: string) => {
+      if (p.includes('CLAUDE.md')) return content
+      throw new Error('ENOENT')
+    })
+    ;(fs.existsSync as Mock).mockImplementation((p: string) => {
+      if (p.includes('CLAUDE.md') || p.includes('.claude')) return true
+      return false
+    })
+
+    const report = await runHealth()
+    expect(report).toHaveProperty('findings')
+    expect(report).toHaveProperty('score')
+    expect(report).toHaveProperty('tokenCosts')
+    expect(report).toHaveProperty('signalToNoise')
+    expect(typeof report.score).toBe('number')
+    expect(report.score).toBeGreaterThanOrEqual(0)
+    expect(report.score).toBeLessThanOrEqual(100)
   })
 
   it('sorts findings by severity: critical first', async () => {
@@ -409,7 +636,8 @@ describe('runHealth', () => {
     })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
-    const findings = await runHealth()
+    const report = await runHealth()
+    const findings = report.findings
     expect(findings.length).toBeGreaterThan(0)
 
     // Verify critical comes before structural

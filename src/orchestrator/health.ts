@@ -1,6 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import type { HealthFinding, HealthSeverity } from '../types/index.js'
+import type {
+  HealthFinding,
+  HealthSeverity,
+  HealthReport,
+  SignalToNoiseResult,
+  TokenCostEntry,
+  TokenCostBreakdown,
+} from '../types/index.js'
 import {
   CLAUDE_MD_PATH,
   SKILLS_DIR,
@@ -8,6 +15,13 @@ import {
   SETTINGS_PATH,
   CLAUDE_MD_TOKEN_LIMIT,
   DANGEROUS_COMMANDS,
+  SCORE_WEIGHTS,
+  SNR_BONUS_THRESHOLD,
+  SNR_BONUS_POINTS,
+  SNR_PENALTY_THRESHOLD,
+  SNR_PENALTY_POINTS,
+  TOKEN_COST_WARN_THRESHOLD,
+  FILLER_PATTERNS,
 } from '../constants.js'
 import { readFileIfExists, tokenEstimate, which } from './utils.js'
 
@@ -343,9 +357,171 @@ export function checkHooks(): HealthFinding[] {
   return findings
 }
 
+// ── analyzeSignalToNoise ──────────────────────────────────────────────────
+
+/**
+ * Classify each line of CLAUDE.md content as signal (actionable) or noise (filler).
+ * Signal lines: list items (- / * / numbered), code blocks, table data rows (|),
+ *   key-value pairs (word: value), non-empty prose with directives.
+ * Noise lines: blanks, decorative separators, empty headers, HTML comments,
+ *   headers-only lines (# text with no following content counted per-line).
+ */
+export function analyzeSignalToNoise(content: string): SignalToNoiseResult {
+  const lines = content.split('\n')
+  const totalLines = lines.length
+
+  if (totalLines === 0) {
+    return { signalLines: 0, noiseLines: 0, totalLines: 0, ratio: 0 }
+  }
+
+  let signalLines = 0
+  let noiseLines = 0
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    // Check filler patterns first
+    if (FILLER_PATTERNS.some(p => p.test(trimmed))) {
+      noiseLines++
+      continue
+    }
+
+    // Empty after trim
+    if (trimmed.length === 0) {
+      noiseLines++
+      continue
+    }
+
+    // Signal patterns: list items, code blocks, table rows, key-value
+    const isSignal =
+      /^[-*]\s+.+/.test(trimmed) ||         // unordered list items
+      /^\d+[.)]\s+.+/.test(trimmed) ||       // ordered list items
+      /^```/.test(trimmed) ||                 // code block markers
+      /^\|.+\|/.test(trimmed) ||             // table rows
+      /^\w[\w\s]*:\s+.+/.test(trimmed)       // key-value pairs
+
+    // Headers with text count as structural (noise for S/N purposes)
+    const isHeaderOnly = /^#{1,6}\s+\S/.test(trimmed)
+
+    if (isSignal) {
+      signalLines++
+    } else if (isHeaderOnly) {
+      noiseLines++
+    } else if (trimmed.length > 10) {
+      // Long prose lines — could be either, lean toward noise
+      noiseLines++
+    } else {
+      noiseLines++
+    }
+  }
+
+  const ratio = totalLines > 0 ? Math.round((signalLines / totalLines) * 100) : 0
+
+  return { signalLines, noiseLines, totalLines, ratio }
+}
+
+// ── computeTokenCosts ─────────────────────────────────────────────────────
+
+export function computeTokenCosts(): TokenCostBreakdown {
+  const entries: TokenCostEntry[] = []
+
+  // CLAUDE.md
+  const claudeMdContent = readFileIfExists(CLAUDE_MD_PATH)
+  if (claudeMdContent) {
+    entries.push({
+      source: 'CLAUDE.md',
+      tokens: tokenEstimate(claudeMdContent),
+      category: 'claude-md',
+    })
+  }
+
+  // Skills
+  if (fs.existsSync(SKILLS_DIR)) {
+    try {
+      const skillDirs = fs.readdirSync(SKILLS_DIR)
+      for (const dir of skillDirs) {
+        if (dir.startsWith('_') || dir.startsWith('.')) continue
+        const skillPath = path.join(SKILLS_DIR, dir, 'SKILL.md')
+        const skillContent = readFileIfExists(skillPath)
+        if (skillContent) {
+          entries.push({
+            source: `skills/${dir}`,
+            tokens: tokenEstimate(skillContent),
+            category: 'skill',
+          })
+        }
+      }
+    } catch {
+      // skills dir not readable — skip
+    }
+  }
+
+  // MCP configs
+  for (const configPath of MCP_CONFIG_PATHS) {
+    const content = readFileIfExists(configPath)
+    if (content) {
+      entries.push({
+        source: path.basename(configPath),
+        tokens: tokenEstimate(content),
+        category: 'mcp',
+      })
+    }
+  }
+
+  // settings.json
+  const settingsContent = readFileIfExists(SETTINGS_PATH)
+  if (settingsContent) {
+    entries.push({
+      source: 'settings.json',
+      tokens: tokenEstimate(settingsContent),
+      category: 'settings',
+    })
+  }
+
+  // Sort descending by tokens
+  entries.sort((a, b) => b.tokens - a.tokens)
+
+  const total = entries.reduce((sum, e) => sum + e.tokens, 0)
+
+  return { entries, total }
+}
+
+// ── computeScore ──────────────────────────────────────────────────────────
+
+export function computeScore(
+  findings: HealthFinding[],
+  snr: SignalToNoiseResult | null,
+  tokenTotal?: number,
+): number {
+  let score = 100
+
+  // Deduct per finding by severity weight
+  for (const f of findings) {
+    const weight = SCORE_WEIGHTS[f.severity] ?? 0
+    score -= weight
+  }
+
+  // Signal-to-noise bonus/penalty
+  if (snr) {
+    if (snr.ratio >= SNR_BONUS_THRESHOLD) {
+      score += SNR_BONUS_POINTS
+    } else if (snr.ratio <= SNR_PENALTY_THRESHOLD) {
+      score -= SNR_PENALTY_POINTS
+    }
+  }
+
+  // Excessive token penalty
+  if (tokenTotal !== undefined && tokenTotal > TOKEN_COST_WARN_THRESHOLD) {
+    score -= 10
+  }
+
+  // Clamp 0-100
+  return Math.max(0, Math.min(100, score))
+}
+
 // ── runHealth (aggregator) ─────────────────────────────────────────────────
 
-export async function runHealth(): Promise<HealthFinding[]> {
+export async function runHealth(): Promise<HealthReport> {
   const findings: HealthFinding[] = [
     ...checkClaudeMd(),
     ...checkSkills(),
@@ -356,5 +532,15 @@ export async function runHealth(): Promise<HealthFinding[]> {
   // Sort by severity: critical → structural → incremental
   findings.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
 
-  return findings
+  // Signal-to-noise analysis
+  const claudeMdContent = readFileIfExists(CLAUDE_MD_PATH)
+  const signalToNoise = claudeMdContent ? analyzeSignalToNoise(claudeMdContent) : null
+
+  // Token cost analysis
+  const tokenCosts = computeTokenCosts()
+
+  // Overall score
+  const score = computeScore(findings, signalToNoise, tokenCosts.total)
+
+  return { findings, score, tokenCosts, signalToNoise }
 }

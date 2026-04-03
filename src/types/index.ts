@@ -92,6 +92,31 @@ export interface HealthFinding {
   fix: string
 }
 
+export interface SignalToNoiseResult {
+  signalLines: number
+  noiseLines: number
+  totalLines: number
+  ratio: number // 0-100
+}
+
+export interface TokenCostEntry {
+  source: string
+  tokens: number
+  category: 'claude-md' | 'skill' | 'mcp' | 'settings'
+}
+
+export interface TokenCostBreakdown {
+  entries: TokenCostEntry[]
+  total: number
+}
+
+export interface HealthReport {
+  findings: HealthFinding[]
+  score: number // 0-100
+  tokenCosts: TokenCostBreakdown
+  signalToNoise: SignalToNoiseResult | null
+}
+
 // ── MCP Auto-Setup ────────────────────────────────────────────────────────
 
 export interface McpServerDef {

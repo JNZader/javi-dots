@@ -51,6 +51,31 @@ export const DANGEROUS_COMMANDS = [
   ':(){',
 ]
 
+// ── Health Scoring ────────────────────────────────────────────────────────
+export const SCORE_WEIGHTS: Record<string, number> = {
+  critical: 15,
+  structural: 8,
+  incremental: 3,
+}
+
+export const SNR_BONUS_THRESHOLD = 70
+export const SNR_BONUS_POINTS = 5
+export const SNR_PENALTY_THRESHOLD = 40
+export const SNR_PENALTY_POINTS = 10
+
+export const TOKEN_COST_WARN_THRESHOLD = 10_000
+
+/**
+ * Patterns that identify filler/noise lines in CLAUDE.md.
+ * Lines matching these are NOT actionable signal.
+ */
+export const FILLER_PATTERNS: RegExp[] = [
+  /^\s*$/,                    // blank lines
+  /^\s*---+\s*$/,             // horizontal rules
+  /^\s*#{1,6}\s*$/,           // empty headers (# with no text)
+  /^\s*<!--.*-->\s*$/,        // HTML comments
+]
+
 // ── MCP Auto-Setup ────────────────────────────────────────────────────────
 export const CLAUDE_JSON_PATH = path.join(HOME, '.claude.json')
 

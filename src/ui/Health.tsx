@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import Spinner from 'ink-spinner'
 import { runHealth } from '../orchestrator/health.js'
-import type { HealthFinding, HealthSeverity } from '../types/index.js'
+import type { HealthFinding, HealthSeverity, HealthReport } from '../types/index.js'
 import Header from './Header.js'
 import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
@@ -37,19 +37,31 @@ function groupBySeverity(findings: HealthFinding[]): Record<HealthSeverity, Heal
   return groups
 }
 
+function scoreColor(score: number): string {
+  if (score > 80) return theme.success
+  if (score > 50) return theme.warning
+  return theme.error
+}
+
+function snrColor(ratio: number): string {
+  if (ratio >= 70) return theme.success
+  if (ratio >= 40) return theme.warning
+  return theme.error
+}
+
 export default function Health() {
   const { exit } = useApp()
   const isCI = useCIMode()
-  const [findings, setFindings] = useState<HealthFinding[] | null>(null)
+  const [report, setReport] = useState<HealthReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const runCheck = useCallback(() => {
     setLoading(true)
-    setFindings(null)
+    setReport(null)
     setError(null)
     runHealth()
-      .then(r => { setFindings(r); setLoading(false) })
+      .then(r => { setReport(r); setLoading(false) })
       .catch(e => { setError(String(e)); setLoading(false) })
   }, [])
 
@@ -69,9 +81,9 @@ export default function Health() {
     if (input.toLowerCase() === 'q' || key.return || key.escape) exit()
   }, { isActive: !isCI })
 
-  // Health score
-  const total = findings?.length ?? 0
-  const criticalCount = findings?.filter(f => f.severity === 'critical').length ?? 0
+  const findings = report?.findings ?? []
+  const total = findings.length
+  const criticalCount = findings.filter(f => f.severity === 'critical').length
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -88,11 +100,63 @@ export default function Health() {
         <Text color={theme.error}>{glyph.cross} Error: {error}</Text>
       )}
 
-      {findings && (
+      {report && (
         <Box flexDirection="column">
-          {/* Health score */}
+          {/* Overall score */}
+          <Box marginBottom={1} flexDirection="column">
+            <Box>
+              <Text bold>Score: </Text>
+              <Text bold color={scoreColor(report.score) as any}>
+                {report.score}/100
+              </Text>
+            </Box>
+          </Box>
+
+          {/* Signal-to-noise ratio */}
+          {report.signalToNoise && (
+            <Box marginBottom={1}>
+              <Text bold>Signal-to-Noise: </Text>
+              <Text bold color={snrColor(report.signalToNoise.ratio) as any}>
+                {report.signalToNoise.ratio}%
+              </Text>
+              <Text color={theme.muted} dimColor>
+                {' '}({report.signalToNoise.signalLines} signal / {report.signalToNoise.totalLines} total lines)
+              </Text>
+            </Box>
+          )}
+
+          {/* Token cost summary */}
+          {report.tokenCosts.entries.length > 0 && (
+            <Box flexDirection="column" marginBottom={1}>
+              <Text bold>Token Costs: </Text>
+              <Text color={theme.muted} dimColor>
+                Total: {report.tokenCosts.total.toLocaleString()} tokens
+              </Text>
+              {report.tokenCosts.entries.slice(0, 5).map((entry, i) => {
+                const pct = report.tokenCosts.total > 0
+                  ? Math.round((entry.tokens / report.tokenCosts.total) * 100)
+                  : 0
+                return (
+                  <Box key={i} marginLeft={2}>
+                    <Text color={theme.primary}>
+                      {entry.source}: {entry.tokens.toLocaleString()} ({pct}%)
+                    </Text>
+                  </Box>
+                )
+              })}
+              {report.tokenCosts.entries.length > 5 && (
+                <Box marginLeft={2}>
+                  <Text color={theme.muted} dimColor>
+                    ...and {report.tokenCosts.entries.length - 5} more sources
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Findings summary */}
           <Box marginBottom={1}>
-            <Text bold>Health: </Text>
+            <Text bold>Findings: </Text>
             {total === 0 ? (
               <Text bold color={theme.success}>
                 {glyph.check} No issues found
