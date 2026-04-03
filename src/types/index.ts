@@ -192,6 +192,29 @@ export interface NanoResult {
   skillPath: string | null
 }
 
+// ── Token Lifecycle Hooks ────────────────────────────────────────────────
+
+export type TokenHookMode = 'warn' | 'block'
+
+export interface TokenAnatomyEntry {
+  file: string
+  readCount: number
+  totalTokens: number
+  firstRead: number
+  lastRead: number
+}
+
+export interface TokenWasteReport {
+  totalRepeatedReads: number
+  estimatedWastedTokens: number
+  savingsPercent: number
+}
+
+export interface TokenHookStatus {
+  installed: boolean
+  mode: TokenHookMode | null
+}
+
 // ── Security Hooks ──────────────────────────────────────────────────────
 
 // ── Telemetry ───────────────────────────────────────────────────────────

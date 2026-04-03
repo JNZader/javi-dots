@@ -15,6 +15,7 @@ import Prompt from './ui/Prompt.js'
 import Mcp from './ui/Mcp.js'
 import Stats from './ui/Stats.js'
 import Tokens from './ui/Tokens.js'
+import TokenHooks from './ui/TokenHooks.js'
 import Nano from './ui/Nano.js'
 import Security from './ui/Security.js'
 import Telemetry from './ui/Telemetry.js'
@@ -38,6 +39,10 @@ const cli = meow(`
     prompt add       Create a new prompt
     mcp              Bootstrap default MCP servers for Claude
     tokens           Show current session token usage breakdown
+    tokens hooks install  Install token lifecycle guard hook
+    tokens hooks remove   Remove token lifecycle guard hook
+    tokens hooks status   Show token hook installation status
+    tokens hooks report   Anatomy map + waste analysis from ledger
     nano <desc>      SDD-lite: challenge, plan, build, review (inline)
     security         Install Claude Code runtime security hooks
     security audit   Show current security hook coverage
@@ -97,6 +102,7 @@ const cli = meow(`
     ghagga: { type: 'boolean' },
     kiteguard: { type: 'boolean' },
     preset: { type: 'string', default: 'custom' },
+    mode: { type: 'string', default: 'warn' },
   }
 })
 
@@ -165,7 +171,21 @@ switch (subcommand) {
   }
 
   case 'tokens': {
-    render(<CIProvider isCI={isCI}><Tokens /></CIProvider>, { stdin: inkStdin })
+    const tokensSubcmd = cli.input[1]
+    if (tokensSubcmd === 'hooks') {
+      const hooksAction = cli.input[2] as 'install' | 'remove' | 'status' | 'report' | undefined
+      const VALID_HOOK_ACTIONS = ['install', 'remove', 'status', 'report']
+      const hookAction = hooksAction && VALID_HOOK_ACTIONS.includes(hooksAction) ? hooksAction : 'status'
+      const hookMode = (cli.flags.mode === 'block' ? 'block' : 'warn') as import('./types/index.js').TokenHookMode
+      render(
+        <CIProvider isCI={isCI}>
+          <TokenHooks action={hookAction} mode={hookMode} dryRun={cli.flags.dryRun} />
+        </CIProvider>,
+        { stdin: inkStdin }
+      )
+    } else {
+      render(<CIProvider isCI={isCI}><Tokens /></CIProvider>, { stdin: inkStdin })
+    }
     break
   }
 
