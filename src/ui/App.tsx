@@ -4,6 +4,7 @@ import CLISelector from './CLISelector.js'
 import GhaggaToggle from './GhaggaToggle.js'
 import KiteguardToggle from './KiteguardToggle.js'
 import HookProfileSelector from './HookProfileSelector.js'
+import AgentWorkspaceToggle from './AgentWorkspaceToggle.js'
 import Confirmation from './Confirmation.js'
 import Progress from './Progress.js'
 import Summary from './Summary.js'
@@ -12,7 +13,7 @@ import Header from './Header.js'
 import { runSetup } from '../orchestrator/index.js'
 import type { AI_CLI, HookProfileId, SetupStep } from '../types/index.js'
 
-type Stage = 'welcome' | 'select-cli' | 'select-ghagga' | 'select-kiteguard' | 'select-hook-profile' | 'confirm' | 'installing' | 'done'
+type Stage = 'welcome' | 'select-cli' | 'select-ghagga' | 'select-kiteguard' | 'select-hook-profile' | 'select-agent-workspace' | 'confirm' | 'installing' | 'done'
 
 interface AppProps {
   dryRun?: boolean
@@ -39,6 +40,7 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
   const [ghagga, setGhagga] = useState(presetGhagga ?? false)
   const [kiteguard, setKiteguard] = useState(presetKiteguard ?? false)
   const [hookProfile, setHookProfile] = useState<HookProfileId>(null)
+  const [agentWorkspace, setAgentWorkspace] = useState(false)
   const [steps, setSteps] = useState<SetupStep[]>([])
   const [startTime] = useState<number>(Date.now())
 
@@ -59,13 +61,18 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
 
   const handleHookProfileConfirm = (profileId: HookProfileId) => {
     setHookProfile(profileId)
+    setStage('select-agent-workspace')
+  }
+
+  const handleAgentWorkspaceConfirm = (enabled: boolean) => {
+    setAgentWorkspace(enabled)
     setStage('confirm')
   }
 
   const handleConfirm = async () => {
     setStage('installing')
     await runSetup(
-      { clis: selectedClis, ghagga, kiteguard, hookProfile, dryRun },
+      { clis: selectedClis, ghagga, kiteguard, hookProfile, agentWorkspace, dryRun },
       (step) => setSteps(prev => {
         const idx = prev.findIndex(s => s.id === step.id)
         if (idx >= 0) {
@@ -115,12 +122,16 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
       {stage === 'select-hook-profile' && (
         <HookProfileSelector onConfirm={handleHookProfileConfirm} />
       )}
+      {stage === 'select-agent-workspace' && (
+        <AgentWorkspaceToggle onConfirm={handleAgentWorkspaceConfirm} />
+      )}
       {stage === 'confirm' && (
         <Confirmation
           clis={selectedClis}
           ghagga={ghagga}
           kiteguard={kiteguard}
           hookProfile={hookProfile}
+          agentWorkspace={agentWorkspace}
           dryRun={dryRun}
           onConfirm={() => void handleConfirm()}
           onCancel={handleCancel}
@@ -142,6 +153,7 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
           ghagga={ghagga}
           kiteguard={kiteguard}
           hookProfile={hookProfile}
+          agentWorkspace={agentWorkspace}
         />
       )}
     </Box>

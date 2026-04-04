@@ -23,7 +23,7 @@ async function commandExists(cmd: string): Promise<boolean> {
 }
 
 export async function runSetup(options: SetupOptions, onStep: StepCallback): Promise<void> {
-  const { clis, ghagga, kiteguard, hookProfile, dryRun } = options
+  const { clis, ghagga, kiteguard, hookProfile, agentWorkspace, dryRun } = options
   const cliList = clis.join(',')
 
   // Step 1: Install javi-ai for selected CLIs
@@ -158,7 +158,15 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     report(onStep, 'hook-profile', 'Hook reliability profile', 'skipped', 'Not selected')
   }
 
-  // Step 7: Write manifest
+  // Step 7: Configure agent workspace — OPTIONAL
+  if (agentWorkspace) {
+    const { runAgentWorkspaceSetup } = await import('./agent-workspace.js')
+    await runAgentWorkspaceSetup(dryRun, onStep)
+  } else {
+    report(onStep, 'agent-workspace', 'Agent workspace setup', 'skipped', 'Not selected')
+  }
+
+  // Step 8: Write manifest
   writeManifest(clis, ghagga, kiteguard, dryRun)
   report(onStep, 'manifest', 'Save configuration', 'done')
 }

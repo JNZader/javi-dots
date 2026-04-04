@@ -9,12 +9,13 @@ interface Props {
   ghagga: boolean
   kiteguard: boolean
   hookProfile: HookProfileId
+  agentWorkspace: boolean
   dryRun: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function Confirmation({ clis, ghagga, kiteguard, hookProfile, dryRun, onConfirm, onCancel }: Props) {
+export default function Confirmation({ clis, ghagga, kiteguard, hookProfile, agentWorkspace, dryRun, onConfirm, onCancel }: Props) {
   const isCI = useCIMode()
   const autoConfirmed = useRef(false)
 
@@ -76,6 +77,14 @@ export default function Confirmation({ clis, ghagga, kiteguard, hookProfile, dry
             <Text color={theme.success}>{hookProfile} {glyph.check} selected</Text>
           ) : (
             <Text color={theme.muted}>none {glyph.dash} skipped</Text>
+          )}
+        </Box>
+        <Box>
+          <Text color={theme.muted}>{'  Agent WS:     '}</Text>
+          {agentWorkspace ? (
+            <Text color={theme.success}>agent workspace {glyph.check} enabled</Text>
+          ) : (
+            <Text color={theme.muted}>agent workspace {glyph.cross} skipped</Text>
           )}
         </Box>
       </Box>

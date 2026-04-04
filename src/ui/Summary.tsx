@@ -12,9 +12,10 @@ interface Props {
   ghagga?: boolean
   kiteguard?: boolean
   hookProfile?: HookProfileId
+  agentWorkspace?: boolean
 }
 
-export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga, kiteguard, hookProfile }: Props) {
+export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga, kiteguard, hookProfile, agentWorkspace }: Props) {
   const { exit } = useApp()
   const isCI = useCIMode()
 
@@ -94,6 +95,9 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
         )}
         {!hookProfile && (
           <Text color={theme.muted}>{'    Set hook profile:      '}<Text color={theme.white}>npx javidots profile create &lt;name&gt;</Text></Text>
+        )}
+        {!agentWorkspace && (
+          <Text color={theme.muted}>{'    Add agent workspace:   '}<Text color={theme.white}>npx javidots --agent-workspace</Text></Text>
         )}
       </Box>
 

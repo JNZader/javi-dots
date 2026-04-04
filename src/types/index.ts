@@ -7,6 +7,7 @@ export interface SetupOptions {
   ghagga: boolean
   kiteguard: boolean
   hookProfile: HookProfileId
+  agentWorkspace: boolean
   dryRun: boolean
 }
 

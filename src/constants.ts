@@ -152,6 +152,58 @@ export const BUILT_IN_PROFILES: BuiltInProfile[] = [
   },
 ]
 
+// ── Agent Workspace ───────────────────────────────────────────────────────
+export const AGENT_WORKTREE_CONFIG_PATH = path.join(MANIFEST_DIR, 'worktree-config.json')
+export const AGENTS_MD_PATH = path.join(HOME, '.claude', 'AGENTS.md')
+
+export const DEFAULT_WORKTREE_CONFIG = {
+  max_worktrees: 4,
+  branch_prefix: 'agent/',
+  cleanup_on_merge: true,
+}
+
+export const CLAUDE_MD_AGENT_SECTION = `
+## Agent Identity Conventions
+
+### Naming
+- Each agent session should identify itself at start: "I am [agent-role] agent for [task]"
+- Use descriptive role names: "implement", "review", "test", "refactor"
+
+### Memory Conventions
+- Save decisions to engram before ending a session
+- Use topic_key pattern: \`{project}/{task}/{phase}\`
+- Always recover context via mem_search before starting work on a known task
+
+### Session Protocol
+- Start: check engram for existing context on the task
+- During: save progress notes for long-running tasks
+- End: save final state and any blockers found
+`
+
+export const AGENTS_MD_STARTER = `# Multi-Agent Collaboration Conventions
+
+This file defines conventions for multiple AI agents working in parallel on this project.
+
+## Worktree Isolation
+- Each agent works in its own git worktree (see ~/.javidots/worktree-config.json)
+- Branch naming: \`agent/{task-name}\`
+- Never commit directly to main from an agent branch
+
+## Coordination
+- Use engram for cross-agent memory sharing
+- Topic key format: \`sdd/{change-name}/{phase}\`
+- Check for existing in-progress work before starting a new task
+
+## Conflict Prevention
+- One agent per file at a time
+- Communicate file ownership via engram notes
+- Merge sequentially, review conflicts before resolving
+
+## Identity
+- Agents must self-identify in their first message
+- Format: "I am the [role] agent for [change-name]"
+`
+
 // ── Security Hooks ────────────────────────────────────────────────────
 export const SECURITY_RULES_PATH = path.join(MANIFEST_DIR, 'security-rules.json')
 export const SECURITY_GUARD_PATH = path.join(MANIFEST_DIR, 'security-guard.sh')

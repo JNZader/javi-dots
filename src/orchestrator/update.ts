@@ -20,6 +20,7 @@ export async function runUpdate(
     ghagga: manifest.ghagga,
     kiteguard: manifest.kiteguard ?? false,
     hookProfile: null,
+    agentWorkspace: false,
     dryRun,
   }, onStep)
 
