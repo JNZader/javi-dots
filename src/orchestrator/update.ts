@@ -19,6 +19,7 @@ export async function runUpdate(
     clis: manifest.clis,
     ghagga: manifest.ghagga,
     kiteguard: manifest.kiteguard ?? false,
+    hookProfile: null,
     dryRun,
   }, onStep)
 

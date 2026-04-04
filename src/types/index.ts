@@ -1,9 +1,12 @@
 export type AI_CLI = 'claude' | 'opencode' | 'gemini' | 'qwen' | 'codex' | 'copilot'
 
+export type HookProfileId = 'minimal' | 'standard' | 'strict' | null
+
 export interface SetupOptions {
   clis: AI_CLI[]
   ghagga: boolean
   kiteguard: boolean
+  hookProfile: HookProfileId
   dryRun: boolean
 }
 

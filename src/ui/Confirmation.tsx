@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Box, Text, useInput } from 'ink'
-import type { AI_CLI } from '../types/index.js'
+import type { AI_CLI, HookProfileId } from '../types/index.js'
 import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
@@ -8,12 +8,13 @@ interface Props {
   clis: AI_CLI[]
   ghagga: boolean
   kiteguard: boolean
+  hookProfile: HookProfileId
   dryRun: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function Confirmation({ clis, ghagga, kiteguard, dryRun, onConfirm, onCancel }: Props) {
+export default function Confirmation({ clis, ghagga, kiteguard, hookProfile, dryRun, onConfirm, onCancel }: Props) {
   const isCI = useCIMode()
   const autoConfirmed = useRef(false)
 
@@ -67,6 +68,14 @@ export default function Confirmation({ clis, ghagga, kiteguard, dryRun, onConfir
             <Text color={theme.success}>kiteguard {glyph.check} enabled</Text>
           ) : (
             <Text color={theme.muted}>kiteguard {glyph.cross} skipped</Text>
+          )}
+        </Box>
+        <Box>
+          <Text color={theme.muted}>{'  Hook Profile: '}</Text>
+          {hookProfile ? (
+            <Text color={theme.success}>{hookProfile} {glyph.check} selected</Text>
+          ) : (
+            <Text color={theme.muted}>none {glyph.dash} skipped</Text>
           )}
         </Box>
       </Box>

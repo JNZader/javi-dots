@@ -121,6 +121,37 @@ export const TOKEN_GUARD_SCRIPT_NAME = 'token-guard.sh'
 export const TOKEN_GUARD_PATH = path.join(MANIFEST_DIR, TOKEN_GUARD_SCRIPT_NAME)
 export const TOKEN_HOOK_MODES = ['warn', 'block'] as const
 
+// ── Hook Reliability Profiles ─────────────────────────────────────────
+export type BuiltInProfileId = 'minimal' | 'standard' | 'strict'
+
+export interface BuiltInProfile {
+  id: BuiltInProfileId
+  label: string
+  description: string
+  hooks: string[]
+}
+
+export const BUILT_IN_PROFILES: BuiltInProfile[] = [
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    description: 'Security guard only — blocks destructive commands',
+    hooks: ['security-guard'],
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    description: 'Security guard + token tracking + telemetry',
+    hooks: ['security-guard', 'token-guard', 'telemetry'],
+  },
+  {
+    id: 'strict',
+    label: 'Strict',
+    description: 'All standard hooks + audit trail + extra command validation',
+    hooks: ['security-guard', 'token-guard', 'telemetry', 'audit-trail', 'cmd-validation'],
+  },
+]
+
 // ── Security Hooks ────────────────────────────────────────────────────
 export const SECURITY_RULES_PATH = path.join(MANIFEST_DIR, 'security-rules.json')
 export const SECURITY_GUARD_PATH = path.join(MANIFEST_DIR, 'security-guard.sh')

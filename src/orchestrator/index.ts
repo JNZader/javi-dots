@@ -23,7 +23,7 @@ async function commandExists(cmd: string): Promise<boolean> {
 }
 
 export async function runSetup(options: SetupOptions, onStep: StepCallback): Promise<void> {
-  const { clis, ghagga, kiteguard, dryRun } = options
+  const { clis, ghagga, kiteguard, hookProfile, dryRun } = options
   const cliList = clis.join(',')
 
   // Step 1: Install javi-ai for selected CLIs
@@ -150,7 +150,15 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     report(onStep, 'kiteguard', 'Configure runtime security (kiteguard)', 'skipped', 'Not selected')
   }
 
-  // Step 6: Write manifest
+  // Step 6: Apply hook profile — OPTIONAL
+  if (hookProfile) {
+    const { applyBuiltInProfile } = await import('./profiles.js')
+    await applyBuiltInProfile(hookProfile, dryRun, onStep)
+  } else {
+    report(onStep, 'hook-profile', 'Hook reliability profile', 'skipped', 'Not selected')
+  }
+
+  // Step 7: Write manifest
   writeManifest(clis, ghagga, kiteguard, dryRun)
   report(onStep, 'manifest', 'Save configuration', 'done')
 }

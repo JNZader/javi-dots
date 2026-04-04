@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
-import type { SetupStep, AI_CLI } from '../types/index.js'
+import type { SetupStep, AI_CLI, HookProfileId } from '../types/index.js'
 import { useCIMode } from './CIContext.js'
 import { theme, glyph } from './theme.js'
 
@@ -11,9 +11,10 @@ interface Props {
   elapsedMs?: number
   ghagga?: boolean
   kiteguard?: boolean
+  hookProfile?: HookProfileId
 }
 
-export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga, kiteguard }: Props) {
+export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga, kiteguard, hookProfile }: Props) {
   const { exit } = useApp()
   const isCI = useCIMode()
 
@@ -90,6 +91,9 @@ export default function Summary({ steps, dryRun, selectedClis, elapsedMs, ghagga
         )}
         {!kiteguard && (
           <Text color={theme.muted}>{'    Add runtime security: '}<Text color={theme.white}>npx javidots --kiteguard</Text></Text>
+        )}
+        {!hookProfile && (
+          <Text color={theme.muted}>{'    Set hook profile:      '}<Text color={theme.white}>npx javidots profile create &lt;name&gt;</Text></Text>
         )}
       </Box>
 

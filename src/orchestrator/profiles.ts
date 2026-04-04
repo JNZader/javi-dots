@@ -1,11 +1,12 @@
 import fs from 'fs'
 import path from 'path'
-import type { Profile, ProfilesState, SetupStep } from '../types/index.js'
+import type { Profile, ProfilesState, SetupStep, HookProfileId } from '../types/index.js'
 import {
   PROFILES_DIR,
   PROFILES_STATE_PATH,
   CONFIG_SKILLS_DIR,
   CONFIG_HOOKS_DIR,
+  BUILT_IN_PROFILES,
 } from '../constants.js'
 
 type StepCallback = (step: SetupStep) => void
@@ -192,6 +193,53 @@ export async function listProfiles(
     report(onStep, `profile-${name}`, label, 'done',
       `${profile.description} — ${profile.skills.length} skills, ${profile.hooks.length} hooks`)
   }
+}
+
+/**
+ * Apply a built-in hook profile, saving it as the active profile in ProfilesState.
+ */
+export async function applyBuiltInProfile(
+  profileId: HookProfileId,
+  dryRun: boolean,
+  onStep: StepCallback
+): Promise<void> {
+  if (profileId === null) {
+    report(onStep, 'hook-profile', 'Hook profile', 'skipped', 'no profile selected')
+    return
+  }
+
+  const stepId = 'hook-profile'
+  report(onStep, stepId, `Apply hook profile: ${profileId}`, 'running')
+
+  const preset = BUILT_IN_PROFILES.find(p => p.id === profileId)
+  if (!preset) {
+    report(onStep, stepId, `Apply hook profile: ${profileId}`, 'error', 'unknown profile id')
+    return
+  }
+
+  const now = new Date().toISOString()
+
+  if (!dryRun) {
+    const state = readState()
+
+    const profile: Profile = {
+      name: profileId,
+      description: preset.description,
+      skills: [],
+      hooks: preset.hooks,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    state.profiles[profileId] = profile
+    state.active = profileId
+    writeState(state)
+  }
+
+  report(onStep, stepId, `Apply hook profile: ${profileId}`, 'done',
+    dryRun
+      ? `dry-run: would activate ${preset.hooks.length} hooks (${preset.hooks.join(', ')})`
+      : `activated ${preset.hooks.length} hooks (${preset.hooks.join(', ')})`)
 }
 
 /**

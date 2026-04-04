@@ -3,15 +3,16 @@ import { Box, useApp } from 'ink'
 import CLISelector from './CLISelector.js'
 import GhaggaToggle from './GhaggaToggle.js'
 import KiteguardToggle from './KiteguardToggle.js'
+import HookProfileSelector from './HookProfileSelector.js'
 import Confirmation from './Confirmation.js'
 import Progress from './Progress.js'
 import Summary from './Summary.js'
 import Welcome from './Welcome.js'
 import Header from './Header.js'
 import { runSetup } from '../orchestrator/index.js'
-import type { AI_CLI, SetupStep } from '../types/index.js'
+import type { AI_CLI, HookProfileId, SetupStep } from '../types/index.js'
 
-type Stage = 'welcome' | 'select-cli' | 'select-ghagga' | 'select-kiteguard' | 'confirm' | 'installing' | 'done'
+type Stage = 'welcome' | 'select-cli' | 'select-ghagga' | 'select-kiteguard' | 'select-hook-profile' | 'confirm' | 'installing' | 'done'
 
 interface AppProps {
   dryRun?: boolean
@@ -27,7 +28,7 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
   // Determine initial stage based on presets
   const getInitialStage = (): Stage => {
     if (skipTUI && preselectedClis) return 'installing'
-    if (preselectedClis && presetGhagga !== undefined && presetKiteguard !== undefined) return 'confirm'
+    if (preselectedClis && presetGhagga !== undefined && presetKiteguard !== undefined) return 'select-hook-profile'
     if (preselectedClis && presetGhagga !== undefined) return 'select-kiteguard'
     if (preselectedClis) return 'select-ghagga'
     return 'welcome'
@@ -37,6 +38,7 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
   const [selectedClis, setSelectedClis] = useState<AI_CLI[]>(preselectedClis ?? [])
   const [ghagga, setGhagga] = useState(presetGhagga ?? false)
   const [kiteguard, setKiteguard] = useState(presetKiteguard ?? false)
+  const [hookProfile, setHookProfile] = useState<HookProfileId>(null)
   const [steps, setSteps] = useState<SetupStep[]>([])
   const [startTime] = useState<number>(Date.now())
 
@@ -52,13 +54,18 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
 
   const handleKiteguardConfirm = (enabled: boolean) => {
     setKiteguard(enabled)
+    setStage('select-hook-profile')
+  }
+
+  const handleHookProfileConfirm = (profileId: HookProfileId) => {
+    setHookProfile(profileId)
     setStage('confirm')
   }
 
   const handleConfirm = async () => {
     setStage('installing')
     await runSetup(
-      { clis: selectedClis, ghagga, kiteguard, dryRun },
+      { clis: selectedClis, ghagga, kiteguard, hookProfile, dryRun },
       (step) => setSteps(prev => {
         const idx = prev.findIndex(s => s.id === step.id)
         if (idx >= 0) {
@@ -105,11 +112,15 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
       {stage === 'select-kiteguard' && (
         <KiteguardToggle onConfirm={handleKiteguardConfirm} />
       )}
+      {stage === 'select-hook-profile' && (
+        <HookProfileSelector onConfirm={handleHookProfileConfirm} />
+      )}
       {stage === 'confirm' && (
         <Confirmation
           clis={selectedClis}
           ghagga={ghagga}
           kiteguard={kiteguard}
+          hookProfile={hookProfile}
           dryRun={dryRun}
           onConfirm={() => void handleConfirm()}
           onCancel={handleCancel}
@@ -130,6 +141,7 @@ export default function App({ dryRun = false, preselectedClis, presetGhagga, pre
           elapsedMs={Date.now() - startTime}
           ghagga={ghagga}
           kiteguard={kiteguard}
+          hookProfile={hookProfile}
         />
       )}
     </Box>
