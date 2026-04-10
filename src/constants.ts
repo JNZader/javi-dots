@@ -213,6 +213,8 @@ export const ALL_SECURITY_CATEGORIES = [
   'remote-exec',
   'reverse-shell',
   'credential-read',
+  'package-unsafe',
+  'git-dangerous',
 ] as const
 
 export const DEFAULT_SECURITY_RULES: Array<{
@@ -240,6 +242,17 @@ export const DEFAULT_SECURITY_RULES: Array<{
   { id: 'cat-env-file', pattern: 'cat.*\\.env(?:\\s|$)', category: 'credential-read', description: 'Block reading .env files', enabled: true },
   { id: 'cat-aws-creds', pattern: 'cat.*\\.aws\\/credentials', category: 'credential-read', description: 'Block reading AWS credentials', enabled: true },
   { id: 'cat-netrc', pattern: 'cat.*\\.netrc', category: 'credential-read', description: 'Block reading .netrc file', enabled: true },
+  // Package manager safety (most specific first)
+  { id: 'sudo-pip', pattern: 'sudo\\s+pip', category: 'package-unsafe', description: 'Block: sudo pip install (use venv instead)', enabled: true },
+  { id: 'sudo-npm', pattern: 'sudo\\s+npm', category: 'package-unsafe', description: 'Block: sudo npm install', enabled: true },
+  { id: 'npm-global', pattern: 'npm\\s+install\\s+(-g|--global)', category: 'package-unsafe', description: 'Warn: npm install with global flag', enabled: true },
+  { id: 'pip-no-venv', pattern: 'pip\\s+install(?!.*--user)(?!.*-e\\s+\\.).*(?<!venv)', category: 'package-unsafe', description: 'Warn: pip install outside virtualenv', enabled: true },
+  // Git dangerous operations
+  { id: 'git-force-push-main', pattern: 'git\\s+push\\s+.*--force.*\\b(main|master)\\b', category: 'git-dangerous', description: 'Block: force push to main/master', enabled: true },
+  { id: 'git-force-push', pattern: 'git\\s+push\\s+.*--force(?!-with-lease)\\b', category: 'git-dangerous', description: 'Warn: git push --force (use --force-with-lease instead)', enabled: true },
+  { id: 'git-reset-hard', pattern: 'git\\s+reset\\s+--hard', category: 'git-dangerous', description: 'Warn: git reset --hard (uncommitted changes will be lost)', enabled: true },
+  { id: 'git-clean-fd', pattern: 'git\\s+clean\\s+-fd', category: 'git-dangerous', description: 'Warn: git clean -fd (untracked files will be deleted)', enabled: true },
+  { id: 'docker-system-prune', pattern: 'docker\\s+system\\s+prune', category: 'destructive', description: 'Warn: docker system prune removes all unused data', enabled: true },
 ]
 
 export const CLI_OPTIONS: Array<{ id: AI_CLI; label: string }> = [

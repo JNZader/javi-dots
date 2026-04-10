@@ -269,7 +269,7 @@ export interface TelemetryReport {
 
 // ── Security Hooks ──────────────────────────────────────────────────────
 
-export type SecurityCategory = 'destructive' | 'remote-exec' | 'reverse-shell' | 'credential-read' | 'custom'
+export type SecurityCategory = 'destructive' | 'remote-exec' | 'reverse-shell' | 'credential-read' | 'package-unsafe' | 'git-dangerous' | 'custom'
 
 export interface SecurityRule {
   id: string
