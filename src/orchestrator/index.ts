@@ -158,7 +158,56 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     report(onStep, 'hook-profile', 'Hook reliability profile', 'skipped', 'Not selected')
   }
 
-  // Step 7: Configure agent workspace — OPTIONAL
+  // Step 7: Install RTK (Rust Token Killer) — OPTIONAL
+  report(onStep, 'rtk', 'Install token compressor (rtk)', 'running')
+  try {
+    const rtkExists = await commandExists('rtk')
+
+    if (!rtkExists && !dryRun) {
+      // Try brew first, fall back to cargo
+      const brewExists = await commandExists('brew')
+      if (brewExists) {
+        try {
+          await execFileAsync('brew', ['install', 'rtk-ai/tap/rtk'], { timeout: 120000 })
+        } catch {
+          // brew tap may not exist yet — try cargo
+          const cargoExists = await commandExists('cargo')
+          if (cargoExists) {
+            await execFileAsync('cargo', ['install', 'rtk'], { timeout: 180000 })
+          } else {
+            throw new Error('rtk not found. Install via: brew install rtk-ai/tap/rtk or cargo install rtk')
+          }
+        }
+      } else {
+        const cargoExists = await commandExists('cargo')
+        if (cargoExists) {
+          await execFileAsync('cargo', ['install', 'rtk'], { timeout: 180000 })
+        } else {
+          throw new Error('rtk not found and neither brew nor cargo available. Install via: brew install rtk-ai/tap/rtk')
+        }
+      }
+    }
+
+    // Initialize global config if rtk is now available
+    if (!dryRun) {
+      const rtkNowExists = rtkExists || await commandExists('rtk')
+      if (rtkNowExists) {
+        try {
+          await execFileAsync('rtk', ['init', '-g'], { timeout: 15000 })
+        } catch {
+          // init may fail if already configured — non-fatal
+        }
+      }
+    }
+
+    report(onStep, 'rtk', 'Install token compressor (rtk)', 'done',
+      dryRun ? 'dry-run: would install rtk and run rtk init -g' : 'rtk installed and configured')
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    report(onStep, 'rtk', 'Install token compressor (rtk)', 'error', msg)
+  }
+
+  // Step 8: Configure agent workspace — OPTIONAL
   if (agentWorkspace) {
     const { runAgentWorkspaceSetup } = await import('./agent-workspace.js')
     await runAgentWorkspaceSetup(dryRun, onStep)
@@ -166,7 +215,7 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     report(onStep, 'agent-workspace', 'Agent workspace setup', 'skipped', 'Not selected')
   }
 
-  // Step 8: Write manifest
+  // Step 9: Write manifest
   writeManifest(clis, ghagga, kiteguard, dryRun)
   report(onStep, 'manifest', 'Save configuration', 'done')
 }
@@ -182,6 +231,7 @@ function writeManifest(clis: SetupOptions['clis'], ghagga: boolean, kiteguard: b
       sdd: true,
       ghagga,
       kiteguard,
+      rtk: true,
     }
     fs.mkdirSync(MANIFEST_DIR, { recursive: true })
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2))

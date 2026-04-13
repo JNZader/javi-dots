@@ -35,6 +35,7 @@ export interface Manifest {
   sdd: boolean
   ghagga: boolean
   kiteguard: boolean
+  rtk: boolean
 }
 
 // ── Multi-Editor Config Sync ────────────────────────────────────────────────

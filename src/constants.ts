@@ -204,6 +204,97 @@ This file defines conventions for multiple AI agents working in parallel on this
 - Format: "I am the [role] agent for [change-name]"
 `
 
+// ── Efficiency Profiles ──────────────────────────────────────────────
+export const EFFICIENCY_DIR = path.join(MANIFEST_DIR, 'efficiency')
+export const EFFICIENCY_STATE_PATH = path.join(EFFICIENCY_DIR, 'state.json')
+
+export type EfficiencyProfileId = 'concise' | 'automation' | 'exploratory'
+
+export interface EfficiencyProfileDef {
+  id: EfficiencyProfileId
+  label: string
+  description: string
+  filename: string
+  content: string
+}
+
+export const EFFICIENCY_PROFILES: EfficiencyProfileDef[] = [
+  {
+    id: 'concise',
+    label: 'Concise',
+    description: 'Anti-sycophancy, no summaries, direct answers only. ~63% output reduction.',
+    filename: 'CLAUDE.efficiency.md',
+    content: `# Efficiency Profile: Concise
+
+## Output Rules
+- NEVER start with sycophantic openers ("Great question!", "Sure!", "Of course!")
+- NEVER end with trailing summaries or recaps
+- NEVER offer to help with anything else
+- Answer directly. If the answer is one word, give one word.
+- Omit "here is the code" preambles — just show the code
+- When editing files, show ONLY the changed lines with enough context to locate them
+
+## Tool Call Limits
+- Cap tool calls at 20 per task. If you need more, ask the user.
+- Batch file reads: read multiple files in one step when possible
+- Prefer targeted grep over reading entire files
+
+## Response Format
+- Code responses: code block only, no prose unless explaining a non-obvious decision
+- Yes/no questions: answer first, explain only if needed
+- Error fixes: show the fix, not the diagnosis novel
+`,
+  },
+  {
+    id: 'automation',
+    label: 'Automation',
+    description: 'Pipeline/CI mode. Minimal output, structured results, no interactivity.',
+    filename: 'CLAUDE.efficiency.md',
+    content: `# Efficiency Profile: Automation
+
+## Output Rules
+- NEVER ask clarifying questions — make reasonable assumptions and proceed
+- NEVER produce conversational output
+- Output ONLY structured results (JSON, code blocks, file edits)
+- No greetings, no sign-offs, no filler
+- Errors: single-line description + fix, nothing more
+
+## Tool Call Limits
+- Cap tool calls at 15 per task
+- Fail fast: if a tool call fails, report error immediately, do not retry
+- No exploratory searches — go directly to known paths
+
+## Behavior
+- Assume the user is a script, not a human
+- Prefer machine-readable output formats
+- Never ask for confirmation — execute directly
+`,
+  },
+  {
+    id: 'exploratory',
+    label: 'Exploratory',
+    description: 'Full explanations, alternatives, tradeoffs. For learning and design sessions.',
+    filename: 'CLAUDE.efficiency.md',
+    content: `# Efficiency Profile: Exploratory
+
+## Output Rules
+- Explain the WHY behind every decision
+- Present alternatives with tradeoffs when relevant
+- Use analogies and examples for complex concepts
+- Structure responses with headers for readability
+
+## Tool Call Limits
+- No hard cap — explore thoroughly
+- Read broadly when investigating unfamiliar code
+
+## Behavior
+- Ask clarifying questions when requirements are ambiguous
+- Challenge assumptions — suggest better approaches when you see them
+- Include relevant documentation links and references
+`,
+  },
+]
+
 // ── Security Hooks ────────────────────────────────────────────────────
 export const SECURITY_RULES_PATH = path.join(MANIFEST_DIR, 'security-rules.json')
 export const SECURITY_GUARD_PATH = path.join(MANIFEST_DIR, 'security-guard.sh')

@@ -21,6 +21,7 @@ import Security from './ui/Security.js'
 import Telemetry from './ui/Telemetry.js'
 import { CIProvider } from './ui/CIContext.js'
 import type { AI_CLI, TelemetryMode } from './types/index.js'
+import type { EfficiencyProfileId } from './constants.js'
 
 const cli = meow(`
   Usage
@@ -52,6 +53,10 @@ const cli = meow(`
     telemetry weekly    Weekly aggregation view
     stats            Show session analytics (tokens, cost, tools)
     versions         Show installed agent versions
+    efficiency on    Activate an efficiency profile (concise, automation, exploratory)
+    efficiency off   Deactivate current efficiency profile
+    efficiency list  List available efficiency profiles
+    efficiency status Show current efficiency profile
     doctor           Show health report of current installation
     health           Audit AI agent configuration quality
     esp              Set up Claude ESP tmux integration
@@ -90,6 +95,9 @@ const cli = meow(`
     $ javidots nano "add retry logic to fetch helper"
     $ javidots security
     $ javidots security audit
+    $ javidots efficiency on concise
+    $ javidots efficiency off
+    $ javidots efficiency list
     $ javidots doctor
     $ javidots esp
     $ javidots update
@@ -224,6 +232,46 @@ switch (subcommand) {
       </CIProvider>,
       { stdin: inkStdin }
     )
+    break
+  }
+
+  case 'efficiency': {
+    const effAction = cli.input[1] as 'on' | 'off' | 'list' | 'status' | undefined
+    const effProfileId = cli.input[2] as EfficiencyProfileId | undefined
+
+    // Inline rendering for this simple command — no UI component needed
+    const {
+      activateEfficiency,
+      deactivateEfficiency,
+      efficiencyStatus: showEffStatus,
+      listEfficiencyProfiles,
+    } = await import('./orchestrator/efficiency.js')
+
+    const printStep = (step: import('./types/index.js').SetupStep) => {
+      const icon = step.status === 'done' ? '\u2713' : step.status === 'error' ? '\u2717' : '\u2022'
+      console.log(`  ${icon} ${step.label}${step.detail ? ` — ${step.detail}` : ''}`)
+    }
+
+    switch (effAction) {
+      case 'on': {
+        if (!effProfileId) {
+          console.log('Usage: javidots efficiency on <concise|automation|exploratory>')
+          break
+        }
+        await activateEfficiency(effProfileId, cli.flags.dryRun, printStep)
+        break
+      }
+      case 'off':
+        await deactivateEfficiency(cli.flags.dryRun, printStep)
+        break
+      case 'list':
+        await listEfficiencyProfiles(printStep)
+        break
+      case 'status':
+      default:
+        await showEffStatus(printStep)
+        break
+    }
     break
   }
 

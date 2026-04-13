@@ -44,6 +44,12 @@ export async function runDoctor(): Promise<{
     ? { name: 'agent-teams-lite', status: 'ok', detail: '~/.javidots/agent-teams-lite' }
     : { name: 'agent-teams-lite', status: 'fail', detail: 'Not cloned. Run: npx javidots' })
 
+  // Check rtk (optional — token compression)
+  const rtkPath = await which('rtk')
+  checks.push(rtkPath
+    ? { name: 'rtk', status: 'ok', detail: rtkPath }
+    : { name: 'rtk', status: 'skip', detail: 'Optional — brew install rtk-ai/tap/rtk or cargo install rtk' })
+
   // Check ghagga (optional)
   const ghaggaPath = await which('ghagga')
   checks.push(ghaggaPath

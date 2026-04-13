@@ -37,6 +37,7 @@ flowchart LR
 | 2 | **agent-teams-lite** | ✅ | Clones and configures the SDD (Spec-Driven Development) framework |
 | 3 | **engram** | ✅ | Installs persistent AI memory via Homebrew, configures per CLI |
 | 4 | **ghagga** | ❌ | Optional multi-agent code review system |
+| 5 | **rtk** | ❌ | Token compressor — intercepts shell output, saves 60-90% context tokens |
 
 ## Presets
 
@@ -72,6 +73,10 @@ All commands work in non-TTY environments (pipes, subprocesses).
 | `mcp` | MCP server auto-setup (bootstraps default servers: engram, filesystem, glance) |
 | `tokens` | Token tracking with `.wolf/` ledger, repeated read detection |
 | `nano <desc>` | SDD-lite inline workflow (challenge, plan, build, review) |
+| `efficiency on <id>` | Activate token-efficiency profile (concise, automation, exploratory) |
+| `efficiency off` | Deactivate current efficiency profile |
+| `efficiency list` | List available efficiency profiles |
+| `efficiency status` | Show current efficiency profile |
 
 ```bash
 npx javi-dots setup        # same as just: npx javi-dots
@@ -83,6 +88,8 @@ npx javi-dots esp          # install ESP tmux toggle (Ctrl-e)
 npx javi-dots mcp          # bootstrap default MCP servers
 npx javi-dots tokens       # show token usage report from .wolf/ ledger
 npx javi-dots nano "add error boundary"  # SDD-lite: challenge → plan → build → review
+npx javi-dots efficiency on concise      # activate concise mode (~63% output reduction)
+npx javi-dots efficiency off             # back to normal mode
 ```
 
 ## CLI Flags
@@ -116,6 +123,12 @@ Spec-Driven Development framework. Cloned to `~/.javidots/agent-teams-lite/` and
 ### engram
 
 Persistent AI memory system. Installed via Homebrew (`brew install gentleman-programming/tap/engram`). Each CLI gets its own engram configuration so conversations persist across sessions.
+
+### rtk (optional)
+
+Rust Token Killer. Intercepts shell command output and compresses it before it reaches the LLM context window, saving 60-90% of tokens on verbose command output. Installed via Homebrew (`brew install rtk-ai/tap/rtk`) or Cargo (`cargo install rtk`). During setup, `rtk init -g` creates a global config.
+
+To toggle RTK on/off per session, use `rtk on` / `rtk off` in your shell.
 
 ### ghagga (optional)
 
