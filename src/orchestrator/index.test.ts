@@ -60,6 +60,8 @@ const defaultOpts: SetupOptions = {
   clis: ['claude', 'opencode'],
   ghagga: false,
   kiteguard: false,
+  hookProfile: null,
+  agentWorkspace: false,
   dryRun: false,
 }
 
@@ -101,12 +103,13 @@ describe('runSetup', () => {
       const steps: SetupStep[] = []
       await runSetup({ ...defaultOpts, dryRun: true }, collectSteps(steps))
 
-      // Should have steps for javi-ai, sdd, engram, ghagga, manifest
+      // Should have steps for javi-ai, sdd, engram, ghagga, rtk, manifest
       const ids = steps.map((s) => s.id)
       expect(ids).toContain('javi-ai')
       expect(ids).toContain('sdd')
       expect(ids).toContain('engram')
       expect(ids).toContain('ghagga')
+      expect(ids).toContain('rtk')
       expect(ids).toContain('manifest')
     })
 
@@ -453,6 +456,7 @@ describe('runSetup', () => {
         engram: true,
         sdd: true,
         ghagga: false,
+        rtk: true,
       })
       expect(written.installedAt).toBeDefined()
       expect(written.updatedAt).toBeDefined()

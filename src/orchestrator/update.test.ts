@@ -33,6 +33,7 @@ const validManifest: Manifest = {
   sdd: true,
   ghagga: true,
   kiteguard: false,
+  rtk: true,
 }
 
 function collectSteps(steps: SetupStep[]) {
@@ -78,6 +79,8 @@ describe('runUpdate', () => {
         clis: ['claude', 'opencode'],
         ghagga: true,
         kiteguard: false,
+        hookProfile: null,
+        agentWorkspace: false,
         dryRun: false,
       },
       expect.any(Function),
