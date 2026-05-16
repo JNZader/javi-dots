@@ -15,6 +15,8 @@ That's it. An interactive TUI walks you through selecting AI CLIs, then installs
 
 ## What It Does
 
+See [Workstation Replication](docs/replication.md) for the safe portable profile contract.
+
 `javi-dots` is the single entry point for setting up an AI-powered developer workstation. It orchestrates multiple tools so you don't have to install them one by one.
 
 ```mermaid
@@ -68,6 +70,8 @@ All commands work in non-TTY environments (pipes, subprocesses).
 | `doctor` | Show health report of current installation |
 | `update` | Re-run setup for previously configured CLIs |
 | `uninstall` | Remove javi-dots managed files and manifests |
+| `replication export` | Export a portable new-PC replication profile |
+| `replication show` | Print the portable replication profile JSON |
 | `health` | Audit AI agent config quality (CLAUDE.md, skills, MCP, hooks) |
 | `esp` | Claude ESP tmux integration (toggle split pane with ESP watcher) |
 | `mcp` | MCP server auto-setup (bootstraps default servers: engram, filesystem, glance) |
@@ -83,6 +87,7 @@ npx javi-dots setup        # same as just: npx javi-dots
 npx javi-dots doctor       # check installation health
 npx javi-dots update       # re-apply with same config
 npx javi-dots uninstall    # clean removal
+npx javi-dots replication export  # write ~/.javidots/replication-profile.json
 npx javi-dots health       # audit CLAUDE.md, skills, MCP config, hooks
 npx javi-dots esp          # install ESP tmux toggle (Ctrl-e)
 npx javi-dots mcp          # bootstrap default MCP servers

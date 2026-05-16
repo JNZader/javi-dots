@@ -61,6 +61,8 @@ const cli = meow(`
     health           Audit AI agent configuration quality
     esp              Set up Claude ESP tmux integration
     update           Re-run setup for previously configured CLIs
+    replication export  Export portable workstation replication profile
+    replication show    Print portable workstation replication profile
     uninstall        Remove javidots managed files
 
   Options
@@ -71,6 +73,7 @@ const cli = meow(`
     --kiteguard     Enable kiteguard runtime security
     --no-kiteguard  Disable kiteguard runtime security
     --preset        Preset: full, minimal, custom (default: custom)
+    --output        Output path for replication export
     --version       Show version
     --help          Show this help
 
@@ -100,6 +103,7 @@ const cli = meow(`
     $ javidots efficiency list
     $ javidots doctor
     $ javidots esp
+    $ javidots replication export
     $ javidots update
     $ javidots uninstall
 `, {
@@ -111,6 +115,7 @@ const cli = meow(`
     kiteguard: { type: 'boolean' },
     preset: { type: 'string', default: 'custom' },
     mode: { type: 'string', default: 'warn' },
+    output: { type: 'string', default: '' },
   }
 })
 
@@ -272,6 +277,29 @@ switch (subcommand) {
         await showEffStatus(printStep)
         break
     }
+    break
+  }
+
+  case 'replication': {
+    const replicationAction = cli.input[1] as 'export' | 'show' | undefined
+    const {
+      createPortableReplicationProfile,
+      writePortableReplicationProfile,
+    } = await import('./orchestrator/replication.js')
+    const profile = createPortableReplicationProfile()
+
+    if (replicationAction === 'show') {
+      console.log(JSON.stringify(profile, null, 2))
+      break
+    }
+
+    const outputPath = cli.flags.output || undefined
+    const writtenPath = cli.flags.dryRun
+      ? (outputPath ?? '~/.javidots/replication-profile.json')
+      : writePortableReplicationProfile(profile, outputPath)
+    console.log(`${cli.flags.dryRun ? 'Would write' : 'Wrote'} portable replication profile: ${writtenPath}`)
+    console.log(`CLIs: ${profile.clis.join(', ')}`)
+    console.log(`Tools: ${profile.tools.join(', ')}`)
     break
   }
 

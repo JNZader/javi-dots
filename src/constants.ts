@@ -5,6 +5,7 @@ import type { AI_CLI, EditorConfig } from './types/index.js'
 export const HOME = os.homedir()
 export const MANIFEST_DIR = path.join(HOME, '.javidots')
 export const MANIFEST_PATH = path.join(MANIFEST_DIR, 'manifest.json')
+export const REPLICATION_PROFILE_PATH = path.join(MANIFEST_DIR, 'replication-profile.json')
 
 /** Central config repository for multi-editor sync */
 export const CONFIG_REPO_DIR = path.join(MANIFEST_DIR, 'config')

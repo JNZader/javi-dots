@@ -38,6 +38,36 @@ export interface Manifest {
   rtk: boolean
 }
 
+// ── Portable Workstation Replication ───────────────────────────────────────
+
+export type PortableReplicationFeature =
+  | 'skills'
+  | 'configs'
+  | 'hooks'
+  | 'plugins'
+  | 'orchestrators'
+  | 'engram'
+  | 'sdd'
+
+export type PortableReplicationTool =
+  | 'engram'
+  | 'agent-teams-lite'
+  | 'ghagga'
+  | 'kiteguard'
+  | 'rtk'
+
+export interface PortableReplicationProfile {
+  version: number
+  generatedAt: string
+  source: 'javi-dots'
+  clis: AI_CLI[]
+  preset: 'minimal' | 'full' | 'custom'
+  features: PortableReplicationFeature[]
+  tools: PortableReplicationTool[]
+  mcpServers: string[]
+  excludedState: string[]
+}
+
 // ── Multi-Editor Config Sync ────────────────────────────────────────────────
 
 export interface EditorConfig {
