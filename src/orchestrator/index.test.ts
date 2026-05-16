@@ -12,16 +12,20 @@ vi.mock('fs', () => ({
     mkdirSync: vi.fn(),
     writeFileSync: vi.fn(),
     readFileSync: vi.fn(),
+    readdirSync: vi.fn(),
+    statSync: vi.fn(),
   },
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),
   writeFileSync: vi.fn(),
   readFileSync: vi.fn(),
+  readdirSync: vi.fn(),
+  statSync: vi.fn(),
 }))
 
 import { execFile } from 'child_process'
 import fs from 'fs'
-import { runSetup } from './index.js'
+import { runSetup, validateJaviAiAssets } from './index.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 /** Make execFile invoke its callback successfully */
@@ -72,6 +76,8 @@ describe('runSetup', () => {
     ;(fs.existsSync as Mock).mockReturnValue(false)
     ;(fs.mkdirSync as Mock).mockReturnValue(undefined)
     ;(fs.writeFileSync as Mock).mockReturnValue(undefined)
+    ;(fs.readdirSync as Mock).mockReturnValue(['asset'])
+    ;(fs.statSync as Mock).mockReturnValue({ isDirectory: () => false, isFile: () => true })
   })
 
   // ── dryRun mode (Tier 1 mutation targets) ────────────────────────────────
@@ -137,6 +143,7 @@ describe('runSetup', () => {
   describe('Step 1 — javi-ai', () => {
     it('success: emits running then done with CLI list', async () => {
       execFileSucceeds()
+      ;(fs.existsSync as Mock).mockReturnValue(true)
       const steps: SetupStep[] = []
       await runSetup(defaultOpts, collectSteps(steps))
 
@@ -146,6 +153,29 @@ describe('runSetup', () => {
       expect(javiAiSteps[1].status).toBe('done')
       expect(javiAiSteps[1].label).toContain('javi-ai')
       expect(javiAiSteps[1].detail).toContain('claude,opencode')
+    })
+
+    it('post-install validation failure emits actionable incomplete-assets error', async () => {
+      execFileRouted({ 'which:git': 'ok', 'which:engram': 'ok', 'which:ghagga': 'ok', npx: 'ok' })
+      ;(fs.existsSync as Mock).mockReturnValue(false)
+      const steps: SetupStep[] = []
+      await runSetup({ ...defaultOpts, clis: ['codex'] }, collectSteps(steps))
+
+      const javiAiError = steps.find((s) => s.id === 'javi-ai' && s.status === 'error')
+      expect(javiAiError).toBeDefined()
+      expect(javiAiError!.detail).toContain('assets are incomplete')
+      expect(javiAiError!.detail).toContain('.codex')
+      expect(javiAiError!.detail).toContain('config.toml')
+    })
+
+    it('validateJaviAiAssets returns missing active paths for selected CLIs', () => {
+      ;(fs.existsSync as Mock).mockReturnValue(false)
+
+      const missing = validateJaviAiAssets(['codex'], '/home/test')
+
+      expect(missing).toHaveLength(1)
+      expect(missing[0]).toContain('/home/test/.codex/skills')
+      expect(missing[0]).toContain('/home/test/.codex/config.toml')
     })
 
     it('failure: emits error with install instructions', async () => {

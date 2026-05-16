@@ -9,6 +9,98 @@ const execFileAsync = promisify(execFile)
 
 type StepCallback = (step: SetupStep) => void
 
+interface JaviAiAssetTarget {
+  cli: SetupOptions['clis'][number]
+  label: string
+  paths: string[]
+}
+
+function javiAiAssetTargets(homeDir: string): JaviAiAssetTarget[] {
+  return [
+    {
+      cli: 'claude',
+      label: 'Claude skills/config',
+      paths: [
+        path.join(homeDir, '.claude', 'skills'),
+        path.join(homeDir, '.claude', 'CLAUDE.md'),
+        path.join(homeDir, '.claude', 'settings.json'),
+      ],
+    },
+    {
+      cli: 'opencode',
+      label: 'OpenCode skills/config',
+      paths: [
+        path.join(homeDir, '.config', 'opencode', 'skill'),
+        path.join(homeDir, '.config', 'opencode', 'opencode.json'),
+      ],
+    },
+    {
+      cli: 'gemini',
+      label: 'Gemini skills/config',
+      paths: [
+        path.join(homeDir, '.gemini', 'skills'),
+        path.join(homeDir, '.gemini', 'settings.json'),
+      ],
+    },
+    {
+      cli: 'qwen',
+      label: 'Qwen skills/config',
+      paths: [
+        path.join(homeDir, '.qwen', 'skills'),
+        path.join(homeDir, '.qwen', 'QWEN.md'),
+        path.join(homeDir, '.qwen', 'settings.json'),
+      ],
+    },
+    {
+      cli: 'codex',
+      label: 'Codex skills/config',
+      paths: [
+        path.join(homeDir, '.codex', 'skills'),
+        path.join(homeDir, '.codex', 'config.toml'),
+      ],
+    },
+    {
+      cli: 'copilot',
+      label: 'Copilot skills/config',
+      paths: [
+        path.join(homeDir, '.copilot', 'skills'),
+        path.join(homeDir, '.copilot', 'instructions', 'base-rules.instructions.md'),
+        path.join(homeDir, '.copilot', 'instructions', 'sdd-orchestrator.instructions.md'),
+        path.join(homeDir, '.copilot', 'agents', 'sdd-orchestrator.md'),
+      ],
+    },
+  ]
+}
+
+function hasDirectoryEntries(dirPath: string): boolean {
+  try {
+    return fs.existsSync(dirPath) && fs.readdirSync(dirPath).some(entry => !entry.startsWith('.'))
+  } catch {
+    return false
+  }
+}
+
+function hasInstalledAsset(assetPath: string): boolean {
+  try {
+    if (!fs.existsSync(assetPath)) return false
+    const stat = fs.statSync(assetPath)
+    return stat.isDirectory() ? hasDirectoryEntries(assetPath) : stat.isFile()
+  } catch {
+    return false
+  }
+}
+
+function validateJaviAiAssets(clis: SetupOptions['clis'], homeDir = process.env['HOME'] ?? process.env['USERPROFILE'] ?? ''): string[] {
+  if (!homeDir) return ['HOME is not set; cannot validate javi-ai assets']
+
+  return javiAiAssetTargets(homeDir)
+    .filter(target => clis.includes(target.cli))
+    .flatMap(target => {
+      const missing = target.paths.filter(assetPath => !hasInstalledAsset(assetPath))
+      return missing.length > 0 ? [`${target.label} missing: ${missing.join(', ')}`] : []
+    })
+}
+
 function report(onStep: StepCallback, id: string, label: string, status: SetupStep['status'], detail?: string) {
   onStep({ id, label, status, detail })
 }
@@ -22,6 +114,8 @@ async function commandExists(cmd: string): Promise<boolean> {
   }
 }
 
+export { validateJaviAiAssets }
+
 export async function runSetup(options: SetupOptions, onStep: StepCallback): Promise<void> {
   const { clis, ghagga, kiteguard, hookProfile, agentWorkspace, dryRun } = options
   const cliList = clis.join(',')
@@ -34,13 +128,19 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
         timeout: 120000,
         env: { ...process.env, FORCE_COLOR: '0' },
       })
+
+      const missingAssets = validateJaviAiAssets(clis)
+      if (missingAssets.length > 0) {
+        throw new Error(`javi-ai install completed but assets are incomplete. ${missingAssets.join(' | ')}`)
+      }
     }
     report(onStep, 'javi-ai', 'Install AI framework (javi-ai)', 'done', `CLIs: ${cliList}`)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
-    report(onStep, 'javi-ai', 'Install AI framework (javi-ai)', 'error',
-      `Failed. Run: npm install -g javi-ai && javi-ai install --cli ${cliList}`)
-    void msg // acknowledge error
+    const detail = msg.includes('assets are incomplete')
+      ? `${msg}. Run: npm install -g javi-ai && javi-ai install --cli ${cliList}`
+      : `Failed. Run: npm install -g javi-ai && javi-ai install --cli ${cliList}`
+    report(onStep, 'javi-ai', 'Install AI framework (javi-ai)', 'error', detail)
   }
 
   // Step 2: Install agent-teams-lite (SDD) — MANDATORY
