@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:mutation": "stryker run"
+    "test:mutation": "stryker run",
+    "package:check": "npm pack --dry-run --json --cache /tmp/javi-dots-npm-pack-cache > /tmp/javi-dots-pack.json && node scripts/verify-package-contents.mjs /tmp/javi-dots-pack.json"
   },
   "keywords": [
     "developer-tools",
@@ -49,5 +50,13 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
-  }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "!dist/__integration__/**",
+    "!dist/e2e/**",
+    "README.md",
+    "LICENSE*"
+  ]
 }
