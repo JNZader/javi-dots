@@ -4,7 +4,7 @@
   "description": "Developer workstation setup — AI CLIs, SDD, memory, and code review in one command",
   "type": "module",
   "bin": {
-    "javi-dots": "./dist/index.js"
+    "javi-dots": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -29,7 +29,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JNZader/javi-dots"
+    "url": "git+https://github.com/JNZader/javi-dots.git"
   },
   "engines": {
     "node": ">=18"
