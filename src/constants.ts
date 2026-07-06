@@ -369,9 +369,9 @@ export const EDITOR_CONFIGS: EditorConfig[] = [
   {
     id: 'opencode',
     label: 'OpenCode',
-    globalDir: path.join(HOME, '.opencode'),
-    skillsDir: path.join(HOME, '.opencode', 'skills'),
-    hooksDir: path.join(HOME, '.opencode', 'hooks'),
+    globalDir: path.join(HOME, '.config', 'opencode'),
+    skillsDir: path.join(HOME, '.config', 'opencode', 'skills'),
+    hooksDir: path.join(HOME, '.config', 'opencode', 'hooks'),
     instructionFile: 'AGENTS.md',
   },
   {
