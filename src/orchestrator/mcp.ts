@@ -1,8 +1,9 @@
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
-import type { McpServerDef, McpServerResult, McpSetupResult } from '../types/index.js'
+import type { AI_CLI, McpServerDef, McpServerResult, McpSetupResult } from '../types/index.js'
 import { DEFAULT_MCP_SERVERS, CLAUDE_JSON_PATH, MCP_CONFIG_PATHS } from '../constants.js'
 import { which } from './utils.js'
 
@@ -131,4 +132,118 @@ export async function runMcpSetup(dryRun: boolean): Promise<McpSetupResult> {
   }
 
   return { results, configPath: CLAUDE_JSON_PATH }
+}
+
+// ── Per-CLI engram MCP registration (replaces "engram setup <cli>") ────────
+
+/**
+ * Resolve the MCP config file path for a given CLI. Returns null for CLIs we
+ * do not know how to wire (e.g. unsupported CLI → orchestrator skips with
+ * a warning rather than failing).
+ */
+export function resolveEngramConfigPath(
+  cli: AI_CLI,
+  homeDir: string = os.homedir(),
+): string | null {
+  switch (cli) {
+    case 'claude':
+      return path.join(homeDir, '.claude.json')
+    case 'opencode':
+      return path.join(homeDir, '.config', 'opencode', 'opencode.json')
+    case 'gemini':
+      return path.join(homeDir, '.gemini', 'settings.json')
+    case 'qwen':
+      return path.join(homeDir, '.qwen', 'settings.json')
+    case 'codex':
+      return path.join(homeDir, '.codex', 'config.toml')
+    case 'copilot':
+      return path.join(homeDir, '.copilot', 'mcp.json')
+    default:
+      return null
+  }
+}
+
+/**
+ * Resolve the JSON key under which MCP servers are listed for a given CLI's
+ * config file. opencode uses the `mcp` block; Claude Code uses `mcpServers`;
+ * other CLIs follow Anthropic MCP convention.
+ */
+function resolveMcpServersKey(cli: AI_CLI): string {
+  switch (cli) {
+    case 'opencode':
+      return 'mcp'
+    case 'claude':
+    case 'gemini':
+    case 'qwen':
+    case 'copilot':
+    default:
+      return 'mcpServers'
+  }
+}
+
+/**
+ * Register the `engram` MCP server in the per-CLI MCP config, deeply merging
+ * into the existing config (preserves user keys). Atomic write via .tmp +
+ * rename. Throws on error (does NOT swallow per spec — unlike the previous
+ * `engram setup <cli>` call which silently caught-and-ignored failures).
+ *
+ * Codex uses TOML, not JSON — for codex we currently skip with a clear message
+ * rather than approximate TOML round-tripping in this iteration.
+ */
+export async function registerEngramMcpForCli(
+  cli: AI_CLI,
+  homeDir: string = os.homedir(),
+): Promise<{ configPath: string; action: 'created' | 'updated' | 'skipped' }> {
+  const configPath = resolveEngramConfigPath(cli, homeDir)
+  if (!configPath) {
+    throw new Error(`registerEngramMcpForCli: unsupported CLI '${cli}'`)
+  }
+  if (cli === 'codex') {
+    // Codex uses TOML — out of scope for this iteration's JSON-only writer.
+    return { configPath, action: 'skipped' }
+  }
+
+  const engramEntry = {
+    command: ['engram'],
+    args: ['mcp'],
+    type: 'local',
+  }
+
+  // Read existing
+  let config: Record<string, unknown> = {}
+  const existed = fs.existsSync(configPath)
+  if (existed) {
+    try {
+      const raw = fs.readFileSync(configPath, 'utf-8')
+      config = JSON.parse(raw) as Record<string, unknown>
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      throw new Error(`registerEngramMcpForCli: failed to parse ${configPath}: ${msg}`)
+    }
+  }
+
+  const key = resolveMcpServersKey(cli)
+  if (!config[key] || typeof config[key] !== 'object') {
+    config[key] = {}
+  }
+  const block = config[key] as Record<string, unknown>
+
+  const action: 'created' | 'updated' = block['engram'] ? 'updated' : 'created'
+  block['engram'] = engramEntry
+
+  // Atomic write — .tmp + rename so a crash mid-write doesn't lose the user's
+  // original config.
+  const dir = path.dirname(configPath)
+  try { fs.mkdirSync(dir, { recursive: true }) } catch {}
+  const tmpPath = `${configPath}.tmp`
+  try {
+    fs.writeFileSync(tmpPath, JSON.stringify(config, null, 2), 'utf-8')
+    fs.renameSync(tmpPath, configPath)
+  } catch (e) {
+    try { fs.unlinkSync(tmpPath) } catch {}
+    const msg = e instanceof Error ? e.message : String(e)
+    throw new Error(`registerEngramMcpForCli: write to ${configPath} failed: ${msg}`)
+  }
+
+  return { configPath, action: existed ? 'updated' : 'created' }
 }
