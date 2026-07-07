@@ -88,7 +88,7 @@ describe('dry-run setup', () => {
     // javi-ai step
     expect(stdout).toMatch(/javi-ai/i)
     // SDD step (mandatory)
-    expect(stdout).toMatch(/agent-teams-lite|SDD/i)
+    expect(stdout).toMatch(/gentle-ai/i)
     // engram step (mandatory)
     expect(stdout).toMatch(/engram|memory/i)
     // ghagga skipped
@@ -152,7 +152,7 @@ describe('dry-run setup', () => {
   it('--dry-run SDD step is always present (mandatory)', async () => {
     const { stdout, exitCode } = await runCLI(['--dry-run', '--preset', 'minimal'])
     expect(exitCode).toBe(0)
-    expect(stdout).toMatch(/agent-teams-lite|SDD/i)
+    expect(stdout).toMatch(/gentle-ai/i)
   })
 
   it('--dry-run engram step is always present (mandatory)', async () => {

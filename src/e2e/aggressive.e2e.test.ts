@@ -242,8 +242,8 @@ describe('doctor checks', () => {
     expect(output).toMatch(/manifest.*not installed/i)
     // Git should be ok (git IS available in CI/dev environments)
     expect(stdout).toContain('git')
-    // agent-teams-lite should fail (not cloned in sandbox)
-    expect(output).toMatch(/agent-teams-lite/)
+    // gentle-ai should fail in a clean sandbox when the binary is absent
+    expect(output).toMatch(/gentle-ai/)
     // Health score should be shown
     expect(stdout).toMatch(/\d+\/\d+ checks passed/)
   })
@@ -319,7 +319,7 @@ describe('step reporting', () => {
     )
 
     // SDD step should appear in output
-    expect(stdout).toMatch(/agent-teams-lite|SDD/i)
+    expect(stdout).toMatch(/gentle-ai/i)
   })
 
   it('13. engram step always runs (mandatory)', async () => {
@@ -374,7 +374,7 @@ describe('error resilience', () => {
     expect(output).toMatch(/javi-ai/)
 
     // SDD step should still run (appear in output)
-    expect(output).toMatch(/agent-teams-lite|sdd/)
+    expect(output).toMatch(/gentle-ai/)
 
     // Engram step should still run
     expect(output).toMatch(/engram|memory/)
