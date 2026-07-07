@@ -120,10 +120,15 @@ describe("calculatePeriodCosts", () => {
 	});
 
 	it("counts today's sessions", () => {
+		// The implementation buckets "today" by UTC date via
+		// `toISOString().slice(0, 10)`, so using local-day arithmetic here is a
+		// footgun. The most stable assertion is simply two sessions at the same
+		// current timestamp — guaranteed same UTC day.
+		const now = Date.now();
 		const sessions = [
-			makeSession({ startTime: Date.now(), inputTokens: 1000, totalCost: 0.5 }),
+			makeSession({ startTime: now, inputTokens: 1000, totalCost: 0.5 }),
 			makeSession({
-				startTime: Date.now() - 3600_000,
+				startTime: now,
 				inputTokens: 2000,
 				totalCost: 1.0,
 			}),

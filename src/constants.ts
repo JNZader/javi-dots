@@ -86,23 +86,14 @@ export const DEFAULT_MCP_SERVERS: Array<{
   command: string
   args: string[]
 }> = [
+  // Only the engram MCP is a javi-dots default — context7, notion, etc. are
+  // user-configured. We model engram as the brew binary source of truth;
+  // @anthropic/engram-mcp is NOT a fallback per the spec.
   {
     name: 'engram',
-    npmPackage: '@anthropic/engram-mcp',
+    npmPackage: '', // unused — engram comes from brew, not npm
     command: 'engram',
     args: ['mcp'],
-  },
-  {
-    name: 'filesystem',
-    npmPackage: '@anthropic/filesystem-mcp',
-    command: 'npx',
-    args: ['-y', '@anthropic/filesystem-mcp'],
-  },
-  {
-    name: 'glance',
-    npmPackage: '@anthropic/glance-mcp',
-    command: 'npx',
-    args: ['-y', '@anthropic/glance-mcp'],
   },
 ]
 

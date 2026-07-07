@@ -27,7 +27,7 @@ export const PORTABLE_FEATURES: PortableReplicationFeature[] = [
 
 export const DEFAULT_PORTABLE_TOOLS: PortableReplicationTool[] = [
   'engram',
-  'agent-teams-lite',
+  'gentle-ai',
 ]
 
 const SENSITIVE_PATH_SEGMENTS = [

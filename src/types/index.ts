@@ -36,6 +36,12 @@ export interface Manifest {
   ghagga: boolean
   kiteguard: boolean
   rtk: boolean
+  // Optional fields added in Manifest v0.2.0 (gentle-ai-migration SDD change).
+  // Their absence on older manifests is treated as false/undefined — readers
+  // SHOULD treat manifests with version < '0.2.0' as not-yet-migrated.
+  atlMigratedAt?: string
+  backupRef?: string
+  skillsDirCanonical?: boolean
 }
 
 // ── Portable Workstation Replication ───────────────────────────────────────
@@ -52,6 +58,7 @@ export type PortableReplicationFeature =
 export type PortableReplicationTool =
   | 'engram'
   | 'agent-teams-lite'
+  | 'gentle-ai'
   | 'ghagga'
   | 'kiteguard'
   | 'rtk'

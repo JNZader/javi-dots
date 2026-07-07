@@ -6,26 +6,48 @@ vi.mock('child_process', () => ({
   execFile: vi.fn(),
 }))
 
-vi.mock('fs', () => ({
-  default: {
+vi.mock('fs', () => {
+  const fns = {
     existsSync: vi.fn(),
     mkdirSync: vi.fn(),
     writeFileSync: vi.fn(),
     readFileSync: vi.fn(),
     readdirSync: vi.fn(),
     statSync: vi.fn(),
-  },
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  readFileSync: vi.fn(),
-  readdirSync: vi.fn(),
-  statSync: vi.fn(),
+    mkdtempSync: vi.fn(() => '/tmp/javidots-test-staging'),
+    renameSync: vi.fn(),
+    unlinkSync: vi.fn(),
+    copyFileSync: vi.fn(),
+    chmodSync: vi.fn(),
+    rmSync: vi.fn(),
+    utimesSync: vi.fn(),
+  }
+  return { default: fns, ...fns }
+})
+
+// Mock backup.ts + brew-trust.ts + mcp.ts's registerEngramMcpForCli so the
+// orchestrator tests don't need the full submodule dependency graph. We assert
+// their INVOCATIONS through the orchestrator, not their internal behavior.
+vi.mock('./backup.js', () => ({
+  writeSnapshot: vi.fn(async () => ({ skipped: true })),
+  pruneBackups: vi.fn(async () => ({ removed: [], kept: [] })),
+  restoreSnapshot: vi.fn(async () => ({ restored: [], failed: [] })),
+}))
+vi.mock('./brew-trust.js', () => ({
+  ensureBrewTrust: vi.fn(async () => []),
+}))
+vi.mock('./mcp.js', () => ({
+  registerEngramMcpForCli: vi.fn(async () => ({
+    configPath: '/tmp/mock-mcp-config.json',
+    action: 'created',
+  })),
 }))
 
 import { execFile } from 'child_process'
 import fs from 'fs'
 import { runSetup, validateJaviAiAssets } from './index.js'
+import { writeSnapshot as writeSnapshotMock } from './backup.js'
+import { registerEngramMcpForCli } from './mcp.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 /** Make execFile invoke its callback successfully */
@@ -109,14 +131,18 @@ describe('runSetup', () => {
       const steps: SetupStep[] = []
       await runSetup({ ...defaultOpts, dryRun: true }, collectSteps(steps))
 
-      // Should have steps for javi-ai, sdd, engram, ghagga, rtk, manifest
+      // Should have steps for javi-ai, gentle-ai (replaces 'sdd'), engram,
+      // ghagga, rtk, manifest. 'sdd' id is no longer used — Step 2 emits id
+      // 'gentle-ai'.
       const ids = steps.map((s) => s.id)
       expect(ids).toContain('javi-ai')
-      expect(ids).toContain('sdd')
+      expect(ids).toContain('gentle-ai')
       expect(ids).toContain('engram')
       expect(ids).toContain('ghagga')
       expect(ids).toContain('rtk')
       expect(ids).toContain('manifest')
+      // No 'sdd' step id (that was the legacy ATL step).
+      expect(ids).not.toContain('sdd')
     })
 
     it('dryRun=true, ghagga=false: ghagga step is skipped', async () => {
@@ -189,106 +215,127 @@ describe('runSetup', () => {
     })
   })
 
-  // ── Step 2: SDD / agent-teams-lite ────────────────────────────────────────
-  describe('Step 2 — SDD/agent-teams-lite', () => {
-    it('git not found: emits error with "git not found"', async () => {
-      execFileRouted({ 'which:git': 'fail', 'which:engram': 'ok', 'which:ghagga': 'ok', npx: 'ok' })
-      const steps: SetupStep[] = []
-      await runSetup(defaultOpts, collectSteps(steps))
-
-      const sddError = steps.find((s) => s.id === 'sdd' && s.status === 'error')
-      expect(sddError).toBeDefined()
-      expect(sddError!.label).toContain('agent-teams-lite')
-      expect(sddError!.detail).toContain('git not found')
-    })
-
-    it('dir absent: calls git clone', async () => {
+  // ── Step 2: gentle-ai (replaces archived agent-teams-lite) ──────────────
+  describe('Step 2 — gentle-ai', () => {
+    it('gentle-ai already on PATH: invokes install with --agent <list> --preset full-gentleman --persona custom + GENTLE_AI_YES=1', async () => {
       execFileSucceeds()
       ;(fs.existsSync as Mock).mockReturnValue(false)
       const steps: SetupStep[] = []
       await runSetup(defaultOpts, collectSteps(steps))
 
       const calls = (execFile as unknown as Mock).mock.calls
-      const cloneCall = calls.find(
-        (c: unknown[]) => c[0] === 'git' && (c[1] as string[]).includes('clone'),
+      const gentleAiCall = calls.find(
+        (c: unknown[]) => c[0] === 'gentle-ai' && (c[1] as string[])[0] === 'install',
       )
-      expect(cloneCall).toBeDefined()
+      expect(gentleAiCall).toBeDefined()
+      expect((gentleAiCall![1] as string[])).toEqual([
+        'install',
+        '--agent',
+        'claude-code,opencode',
+        '--preset',
+        'full-gentleman',
+        '--persona',
+        'custom',
+      ])
+      const opts = gentleAiCall![2] as { env?: Record<string, string> } | undefined
+      expect(opts?.env?.GENTLE_AI_YES).toBe('1')
     })
 
-    it('dir exists: calls git pull --ff-only', async () => {
+    it('no `git` requirement: gentle-ai path does NOT call `git clone agent-teams-lite`', async () => {
       execFileSucceeds()
-      // First call to existsSync (atlDir) returns true, second (setupScript) returns true
-      ;(fs.existsSync as Mock).mockReturnValue(true)
-      const steps: SetupStep[] = []
-      await runSetup(defaultOpts, collectSteps(steps))
-
-      const calls = (execFile as unknown as Mock).mock.calls
-      const pullCall = calls.find(
-        (c: unknown[]) => c[0] === 'git' && (c[1] as string[]).includes('pull'),
-      )
-      expect(pullCall).toBeDefined()
-    })
-
-    it('per-CLI setup.sh called for each CLI', async () => {
-      execFileSucceeds()
-      ;(fs.existsSync as Mock).mockReturnValue(true)
-      const steps: SetupStep[] = []
-      await runSetup({ ...defaultOpts, clis: ['claude', 'opencode', 'gemini'] }, collectSteps(steps))
-
-      const calls = (execFile as unknown as Mock).mock.calls
-      const bashCalls = calls.filter(
-        (c: unknown[]) => c[0] === 'bash' && (c[1] as string[]).includes('--agent'),
-      )
-      expect(bashCalls).toHaveLength(3)
-      expect((bashCalls[0][1] as string[])[2]).toBe('claude-code')
-      expect((bashCalls[1][1] as string[])[2]).toBe('opencode')
-      expect((bashCalls[2][1] as string[])[2]).toBe('gemini-cli')
-    })
-
-    it('clone failure: emits error', async () => {
       ;(fs.existsSync as Mock).mockReturnValue(false)
-      execFileRouted({
-        'which:git': 'ok',
-        'which:engram': 'ok',
-        'which:ghagga': 'ok',
-        npx: 'ok',
-        git: 'fail',
-        engram: 'ok',
-      })
       const steps: SetupStep[] = []
       await runSetup(defaultOpts, collectSteps(steps))
 
-      const sddError = steps.find((s) => s.id === 'sdd' && s.status === 'error')
-      expect(sddError).toBeDefined()
+      const calls = (execFile as unknown as Mock).mock.calls
+      const gitCloneCall = calls.find(
+        (c: unknown[]) =>
+          c[0] === 'git' && (c[1] as string[]).includes('clone'),
+      )
+      expect(gitCloneCall).toBeUndefined()
+    })
+
+    it('gentle-ai not on PATH, brew present: installs via brew then runs install', async () => {
+      // First `which gentle-ai` fails, then brew install succeeds, then
+      // gentle-ai install runs.
+      let gentleAiWhichFails = true
+      ;(execFile as unknown as Mock).mockImplementation(
+        (cmd: string, args: string[], opts: unknown, cb?: Function) => {
+          const callback = (typeof opts === 'function' ? opts : cb) as Function
+          if (cmd === 'which' && args[0] === 'gentle-ai' && gentleAiWhichFails) {
+            gentleAiWhichFails = false
+            callback(new Error('not found'))
+            return
+          }
+          callback(null, { stdout: '', stderr: '' })
+        },
+      )
+      const steps: SetupStep[] = []
+      await runSetup(defaultOpts, collectSteps(steps))
+
+      const calls = (execFile as unknown as Mock).mock.calls
+      const brewInstallGentleAi = calls.find(
+        (c: unknown[]) =>
+          c[0] === 'brew' &&
+          (c[1] as string[]).includes('install') &&
+          (c[1] as string[]).includes('gentleman-programming/tap/gentle-ai'),
+      )
+      expect(brewInstallGentleAi).toBeDefined()
+      const gentleAiInstall = calls.find(
+        (c: unknown[]) => c[0] === 'gentle-ai' && (c[1] as string[])[0] === 'install',
+      )
+      expect(gentleAiInstall).toBeDefined()
+    })
+
+    it('gentle-ai install failure: emits error step (NOT skipped)', async () => {
+      ;(fs.existsSync as Mock).mockReturnValue(false)
+      // which gentle-ai succeeds, but `gentle-ai install` rejects.
+      let installRejected = false
+      ;(execFile as unknown as Mock).mockImplementation(
+        (cmd: string, args: string[], opts: unknown, cb?: Function) => {
+          const callback = (typeof opts === 'function' ? opts : cb) as Function
+          if (cmd === 'gentle-ai' && (args as string[])[0] === 'install' && !installRejected) {
+            installRejected = true
+            callback(new Error('gentle-ai: invalid agent flag'))
+            return
+          }
+          callback(null, { stdout: '', stderr: '' })
+        },
+      )
+      const steps: SetupStep[] = []
+      await runSetup(defaultOpts, collectSteps(steps))
+
+      const gentleAiError = steps.find((s) => s.id === 'gentle-ai' && s.status === 'error')
+      expect(gentleAiError).toBeDefined()
+      expect(gentleAiError!.detail).toContain('gentle-ai: invalid agent flag')
     })
   })
 
-  // ── Step 3: engram ────────────────────────────────────────────────────────
+  // ── Step 3: engram (now uses registerEngramMcpForCli, no `engram setup <cli>`) ─
   describe('Step 3 — engram', () => {
-    it('already installed: skips brew, configures per CLI', async () => {
+    it('already installed: skips brew, registers engram as MCP via registerEngramMcpForCli', async () => {
       execFileRouted({
-        'which:git': 'ok',
+        'which:gentle-ai': 'ok',
         'which:engram': '/usr/local/bin/engram',
         'which:ghagga': 'ok',
+        'which:brew': 'ok',
         npx: 'ok',
-        git: 'ok',
-        bash: 'ok',
-        engram: 'ok',
       })
       ;(fs.existsSync as Mock).mockReturnValue(false)
       const steps: SetupStep[] = []
       await runSetup(defaultOpts, collectSteps(steps))
 
-      // Should not call brew
       const calls = (execFile as unknown as Mock).mock.calls
-      const brewCall = calls.find((c: unknown[]) => c[0] === 'brew')
-      expect(brewCall).toBeUndefined()
-
-      // Should call engram setup for each CLI
+      // Should NOT call `engram setup <cli>` (the legacy swallow-catch path).
       const engramSetupCalls = calls.filter(
         (c: unknown[]) => c[0] === 'engram' && (c[1] as string[])[0] === 'setup',
       )
-      expect(engramSetupCalls.length).toBeGreaterThanOrEqual(2)
+      expect(engramSetupCalls).toHaveLength(0)
+      // Should also not call brew (we said engram already installed).
+      const brewCall = calls.find(
+        (c: unknown[]) => c[0] === 'brew' && (c[1] as string[]).includes('install'),
+      )
+      expect(brewCall).toBeUndefined()
     })
 
     it('not installed + brew available: installs via brew', async () => {
@@ -334,45 +381,26 @@ describe('runSetup', () => {
       expect(engramError!.detail).toContain('brew not available')
     })
 
-    it('claude mapped to claude-code for engram setup', async () => {
+    it('per-CLI engram register failure is surfaced (NOT swallowed per spec)', async () => {
+      // registerEngramMcpForCli throws (e.g. EACCES) — the orchestrator must
+      // NOT swallow it. The engram step should report 'error'.
       execFileRouted({
-        'which:git': 'ok',
+        'which:gentle-ai': 'ok',
         'which:engram': '/usr/local/bin/engram',
+        'which:brew': 'ok',
         'which:ghagga': 'ok',
         npx: 'ok',
-        git: 'ok',
-        bash: 'ok',
-        engram: 'ok',
       })
       ;(fs.existsSync as Mock).mockReturnValue(false)
-      const steps: SetupStep[] = []
-      await runSetup({ clis: ['claude'], ghagga: false, kiteguard: false, dryRun: false }, collectSteps(steps))
-
-      const calls = (execFile as unknown as Mock).mock.calls
-      const engramSetupCall = calls.find(
-        (c: unknown[]) => c[0] === 'engram' && (c[1] as string[])[0] === 'setup',
+      ;(registerEngramMcpForCli as unknown as Mock).mockRejectedValue(
+        new Error('registerEngramMcpForCli: write to /home/test/.claude.json failed: EACCES: permission denied'),
       )
-      expect(engramSetupCall).toBeDefined()
-      expect((engramSetupCall![1] as string[])[1]).toBe('claude-code')
-    })
-
-    it('per-CLI engram setup failure is swallowed (non-fatal)', async () => {
-      // engram setup fails but overall engram step still reports 'done'
-      execFileRouted({
-        'which:git': 'ok',
-        'which:engram': '/usr/local/bin/engram',
-        'which:ghagga': 'ok',
-        npx: 'ok',
-        git: 'ok',
-        bash: 'ok',
-        engram: 'fail',
-      })
-      ;(fs.existsSync as Mock).mockReturnValue(false)
       const steps: SetupStep[] = []
       await runSetup(defaultOpts, collectSteps(steps))
 
-      const engramDone = steps.find((s) => s.id === 'engram' && s.status === 'done')
-      expect(engramDone).toBeDefined()
+      const engramError = steps.find((s) => s.id === 'engram' && s.status === 'error')
+      expect(engramError).toBeDefined()
+      expect(engramError!.detail).toMatch(/EACCES|registerEngramMcpForCli/)
     })
   })
 
@@ -478,10 +506,17 @@ describe('runSetup', () => {
       await runSetup(defaultOpts, collectSteps(steps))
 
       expect(fs.writeFileSync).toHaveBeenCalled()
-      const writeCall = (fs.writeFileSync as Mock).mock.calls[0]
-      const written = JSON.parse(writeCall[1] as string)
+      // Find the manifest write call (the one whose path matches MANIFEST_PATH).
+      // The first writeFileSync may now be from registerEngramMcpForCli writing
+      // per-CLI MCP config; pick the one whose first arg is MANIFEST_PATH.
+      const allCalls = (fs.writeFileSync as Mock).mock.calls as unknown[][]
+      const manifestWrite = allCalls.find(
+        (c) => typeof c[0] === 'string' && (c[0] as string).endsWith('manifest.json'),
+      )
+      expect(manifestWrite).toBeDefined()
+      const written = JSON.parse(manifestWrite![1] as string)
       expect(written).toMatchObject({
-        version: '0.1.0',
+        version: '0.2.0',
         clis: ['claude', 'opencode'],
         engram: true,
         sdd: true,

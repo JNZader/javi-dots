@@ -35,8 +35,8 @@ The profile is allowlist-based and contains only portable setup intent:
 - selected AI CLIs (`claude`, `opencode`, `gemini`, `qwen`, `codex`, `copilot`)
 - selected preset (`minimal`, `full`, or `custom`)
 - Javi-managed features (`skills`, `configs`, `hooks`, `plugins`, `orchestrators`)
-- mandatory tools (`engram`, `agent-teams-lite`) and selected optional tools (`ghagga`, `kiteguard`, `rtk`)
-- default MCP server names such as `engram`, `filesystem`, and `glance`
+- mandatory tools (`engram`, `gentle-ai`) and selected optional tools (`ghagga`, `kiteguard`, `rtk`)
+- default MCP server names such as `engram`
 - an explicit list of excluded local state categories
 
 ## Never Portable

@@ -23,19 +23,33 @@ vi.mock('fs', () => ({
   writeFileSync: vi.fn(),
 }))
 
+vi.mock('./backup.js', () => ({
+  writeSnapshot: vi.fn(async () => ({
+    skipped: false,
+    manifest: { root_dir: '/tmp/mock-backup' },
+  })),
+}))
+
+vi.mock('./utils.js', () => ({
+  which: vi.fn(async () => '/usr/bin/gentle-ai'),
+}))
+
 import { execFile } from 'child_process'
 import fs from 'fs'
 import { runUninstall } from './uninstall.js'
+import { which } from './utils.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const validManifest: Manifest = {
-  version: '0.1.0',
+  version: '0.2.0',
   installedAt: '2025-01-01T00:00:00.000Z',
   updatedAt: '2025-01-01T00:00:00.000Z',
   clis: ['claude', 'opencode'],
   engram: true,
   sdd: true,
   ghagga: false,
+  kiteguard: false,
+  rtk: true,
 }
 
 function execFileSucceeds() {
@@ -65,6 +79,7 @@ describe('runUninstall', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ;(fs.existsSync as Mock).mockReturnValue(false)
+    ;(which as unknown as Mock).mockResolvedValue('/usr/bin/gentle-ai')
   })
 
   it('no manifest: returns { success: false }', async () => {
@@ -92,8 +107,9 @@ describe('runUninstall', () => {
 
     // Steps should still be emitted with correct ids
     const ids = steps.map((s) => s.id)
+    expect(ids).toContain('backup')
     expect(ids).toContain('javi-ai')
-    expect(ids).toContain('atl')
+    expect(ids).toContain('gentle-ai')
     expect(ids).toContain('manifest')
   })
 
@@ -125,53 +141,60 @@ describe('runUninstall', () => {
     expect(javiAiError!.detail).toContain('failed')
   })
 
-  // ── Step 2: agent-teams-lite removal ──────────────────────────────────────
-  it('step 2 dir exists: rmSync called with recursive+force', async () => {
+  // ── Step 2: gentle-ai uninstall ───────────────────────────────────────────
+  it('step 2 invokes gentle-ai uninstall with mapped agent names', async () => {
     ;(fs.readFileSync as Mock).mockReturnValue(JSON.stringify(validManifest))
     execFileSucceeds()
-    ;(fs.existsSync as Mock).mockReturnValue(true)
 
     const steps: SetupStep[] = []
     await runUninstall(false, collectSteps(steps))
 
-    expect(fs.rmSync).toHaveBeenCalledWith(
-      expect.stringContaining('agent-teams-lite'),
-      { recursive: true, force: true },
+    const calls = (execFile as unknown as Mock).mock.calls
+    const gentleAiUninstall = calls.find(
+      (c: unknown[]) => c[0] === 'gentle-ai' && (c[1] as string[])[0] === 'uninstall',
     )
+    expect(gentleAiUninstall).toBeDefined()
+    expect(gentleAiUninstall![1]).toEqual([
+      'uninstall',
+      '--agent',
+      'claude-code,opencode',
+    ])
   })
 
-  it('step 2 dir absent: rmSync NOT called, still done', async () => {
+  it('step 2 gentle-ai binary absent: skip uninstall step cleanly', async () => {
     ;(fs.readFileSync as Mock).mockReturnValue(JSON.stringify(validManifest))
+    ;(which as unknown as Mock).mockResolvedValue(null)
     execFileSucceeds()
-    ;(fs.existsSync as Mock).mockReturnValue(false)
 
     const steps: SetupStep[] = []
     await runUninstall(false, collectSteps(steps))
 
-    expect(fs.rmSync).not.toHaveBeenCalled()
-    const atlDone = steps.find((s) => s.id === 'atl' && s.status === 'done')
-    expect(atlDone).toBeDefined()
-    expect(atlDone!.label).toContain('agent-teams-lite')
+    const gentleAiSkip = steps.find((s) => s.id === 'gentle-ai' && s.status === 'skipped')
+    expect(gentleAiSkip).toBeDefined()
+    expect(gentleAiSkip!.label).toContain('gentle-ai')
   })
 
   it('step 2 failure: error', async () => {
     ;(fs.readFileSync as Mock).mockReturnValue(JSON.stringify(validManifest))
-    execFileSucceeds()
-    ;(fs.existsSync as Mock).mockImplementation((p: string) => {
-      if (typeof p === 'string' && p.includes('agent-teams-lite')) return true
-      return false
-    })
-    ;(fs.rmSync as Mock).mockImplementation(() => {
-      throw new Error('rmSync failed')
-    })
+    ;(execFile as unknown as Mock).mockImplementation(
+      (cmd: string, args: string[], _opts: unknown, cb?: Function) => {
+        const callback = cb ?? _opts
+        if (typeof callback !== 'function') return
+        if (cmd === 'gentle-ai' && (args as string[])[0] === 'uninstall') {
+          callback(new Error('gentle-ai uninstall failed'))
+          return
+        }
+        callback(null, { stdout: '', stderr: '' })
+      },
+    )
 
     const steps: SetupStep[] = []
     await runUninstall(false, collectSteps(steps))
 
-    const atlError = steps.find((s) => s.id === 'atl' && s.status === 'error')
-    expect(atlError).toBeDefined()
-    expect(atlError!.label).toContain('agent-teams-lite')
-    expect(atlError!.detail).toContain('rmSync failed')
+    const gentleAiError = steps.find((s) => s.id === 'gentle-ai' && s.status === 'error')
+    expect(gentleAiError).toBeDefined()
+    expect(gentleAiError!.label).toContain('gentle-ai')
+    expect(gentleAiError!.detail).toContain('gentle-ai uninstall failed')
   })
 
   // ── Step 3: manifest removal ─────────────────────────────────────────────

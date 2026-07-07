@@ -32,17 +32,23 @@ export async function runDoctor(): Promise<{
     ? { name: 'engram', status: 'ok', detail: engramPath }
     : { name: 'engram', status: 'fail', detail: 'Not found. Run: brew install gentleman-programming/tap/engram' })
 
-  // Check git (needed for agent-teams-lite)
+  // Check git (general purpose — gentle-ai does not require it anymore for
+  // SDD because it doesn't clone any external repo, but git is still needed
+  // for general dev workflows and gentle-ai may use it to detect project roots).
   const gitPath = await which('git')
   checks.push(gitPath
     ? { name: 'git', status: 'ok', detail: gitPath }
-    : { name: 'git', status: 'fail', detail: 'Required for SDD installation' })
+    : { name: 'git', status: 'fail', detail: 'Required for git operations' })
 
-  // Check agent-teams-lite
-  const atlDir = fs.existsSync(path.join(MANIFEST_DIR, 'agent-teams-lite'))
-  checks.push(atlDir
-    ? { name: 'agent-teams-lite', status: 'ok', detail: '~/.javidots/agent-teams-lite' }
-    : { name: 'agent-teams-lite', status: 'fail', detail: 'Not cloned. Run: npx javidots' })
+  // Check gentle-ai (replaces the previous agent-teams-lite dir check)
+  const gentleAiPath = await which('gentle-ai')
+  checks.push(gentleAiPath
+    ? { name: 'gentle-ai', status: 'ok', detail: gentleAiPath }
+    : {
+        name: 'gentle-ai',
+        status: 'fail',
+        detail: 'gentle-ai not found. Run: brew trust --formula gentleman-programming/tap/gentle-ai && brew install gentleman-programming/tap/gentle-ai',
+      })
 
   // Check rtk (optional — token compression)
   const rtkPath = await which('rtk')

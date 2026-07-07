@@ -23,7 +23,7 @@ See [Workstation Replication](docs/replication.md) for the safe portable profile
 flowchart LR
     A["npx javi-dots"] --> B["Select AI CLIs"]
     B --> C["javi-ai install"]
-    C --> D["agent-teams-lite<br/>(SDD workflow)"]
+    C --> D["gentle-ai install<br/>(SDD workflow)"]
     D --> E["engram<br/>(persistent memory)"]
     E --> F{"ghagga?"}
     F -- yes --> G["ghagga init<br/>(code review)"]
@@ -36,7 +36,7 @@ flowchart LR
 | Step | Component | Required | Description |
 |------|-----------|----------|-------------|
 | 1 | **javi-ai** | ✅ | Installs skills, configs, and orchestrators for selected CLIs |
-| 2 | **agent-teams-lite** | ✅ | Clones and configures the SDD (Spec-Driven Development) framework |
+| 2 | **gentle-ai** | ✅ | Installs and configures the SDD (Spec-Driven Development) framework |
 | 3 | **engram** | ✅ | Installs persistent AI memory via Homebrew, configures per CLI |
 | 4 | **ghagga** | ❌ | Optional multi-agent code review system |
 | 5 | **rtk** | ❌ | Token compressor — intercepts shell output, saves 60-90% context tokens |
@@ -74,7 +74,7 @@ All commands work in non-TTY environments (pipes, subprocesses).
 | `replication show` | Print the portable replication profile JSON |
 | `health` | Audit AI agent config quality (CLAUDE.md, skills, MCP, hooks) |
 | `esp` | Claude ESP tmux integration (toggle split pane with ESP watcher) |
-| `mcp` | MCP server auto-setup (bootstraps default servers: engram, filesystem, glance) |
+| `mcp` | MCP server auto-setup (bootstraps default server: engram) |
 | `tokens` | Token tracking with `.wolf/` ledger, repeated read detection |
 | `nano <desc>` | SDD-lite inline workflow (challenge, plan, build, review) |
 | `efficiency on <id>` | Activate token-efficiency profile (concise, automation, exploratory) |
@@ -121,9 +121,9 @@ The AI development layer installer. Deploys skills, configs, orchestrators, hook
 
 👉 See [javi-ai](https://github.com/JNZader/javi-ai)
 
-### agent-teams-lite (SDD)
+### gentle-ai (SDD)
 
-Spec-Driven Development framework. Cloned to `~/.javidots/agent-teams-lite/` and configured for each selected CLI using mapped names (`claude` → `claude-code`, `gemini` → `gemini-cli`). Provides structured planning workflows: `proposal → spec → design → tasks → apply → verify`.
+Spec-Driven Development framework. Installed via Homebrew (`brew trust --formula gentleman-programming/tap/gentle-ai && brew install gentleman-programming/tap/gentle-ai`) and configured non-interactively with `gentle-ai install --agent <list> --preset full-gentleman --persona custom`. Provides structured planning workflows: `proposal → spec → design → tasks → apply → verify`.
 
 ### engram
 
@@ -148,7 +148,7 @@ Configuration is saved to `~/.javidots/manifest.json`. The `update` and `uninsta
 ## Requirements
 
 - **Node.js** ≥ 18
-- **git** — required for cloning agent-teams-lite
+- **git** — required for general repo workflows
 - **brew** — required for installing engram (macOS/Linux)
 
 ## Ecosystem

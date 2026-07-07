@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import React from 'react'
 import { render } from 'ink'
+import { existsSync } from 'node:fs'
+import { homedir } from 'node:os'
+import path from 'node:path'
+import { createInterface } from 'node:readline/promises'
 import { PassThrough } from 'node:stream'
 import meow from 'meow'
 import App from './ui/App.js'
@@ -74,6 +78,13 @@ const cli = meow(`
     --no-kiteguard  Disable kiteguard runtime security
     --preset        Preset: full, minimal, custom (default: custom)
     --output        Output path for replication export
+    --migrate-skill-dir   Move ~/.config/opencode/skill/ (singular, legacy)
+                          entries to ~/.config/opencode/skills/ (plural,
+                          canonical). Canonical wins on conflict; legacy
+                          dir removed. Idempotent.
+    --migrate-from-atl    Backup and remove ~/.javidots/agent-teams-lite/
+                          (archived upstream), then invoke gentle-ai install
+                          to re-establish SDD files. Idempotent.
     --version       Show version
     --help          Show this help
 
@@ -88,6 +99,8 @@ const cli = meow(`
     $ javidots setup --cli claude,opencode --ghagga
     $ javidots --preset minimal
     $ javidots --preset full --dry-run
+    $ javidots --migrate-skill-dir
+    $ javidots --migrate-from-atl
     $ javidots sync
     $ javidots sync --dry-run
     $ javidots status
@@ -120,6 +133,19 @@ const cli = meow(`
 })
 
 const subcommand = cli.input[0] ?? 'setup'
+
+async function promptYesNo(question: string): Promise<boolean> {
+	const rl = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	})
+	try {
+		const answer = (await rl.question(`${question} [y/N] `)).trim().toLowerCase()
+		return answer === 'y' || answer === 'yes'
+	} finally {
+		rl.close()
+	}
+}
 
 const ALL_CLIS: AI_CLI[] = ['claude', 'opencode', 'gemini', 'qwen', 'codex', 'copilot']
 // When stdin doesn't support raw mode (pipes, subprocesses, CI), provide a fake
@@ -340,6 +366,50 @@ switch (subcommand) {
 
   case 'setup':
   default: {
+    // Handle --migrate-from-atl and --migrate-skill-dir BEFORE the regular
+    // setup flow. Both are idempotent; the user is expected to run them as
+    // one-time operations on a workstation set up by an older javi-dots.
+    if (cli.flags.migrateFromAtl) {
+      const { migrateFromAtl } = await import('./orchestrator/migration.js')
+      await migrateFromAtl(cli.flags.dryRun, () => {})
+    }
+    if (cli.flags.migrateSkillDir) {
+      const { migrateSkillDir } = await import('./orchestrator/migration.js')
+      await migrateSkillDir(cli.flags.dryRun, () => {})
+    }
+
+    // If running interactively (TTY, not CI) and legacy state exists but the
+    // user did NOT pass migration flags, offer one-time prompts before the App
+    // render. This fulfills the gentle-ai-migration spec's interactive legacy-
+    // state detection without forcing destructive actions. Non-TTY/CI paths
+    // remain deterministic and prompt-free.
+    const isInteractive = process.stdin.isTTY && process.stdout.isTTY && !isCI
+    if (isInteractive && !cli.flags.migrateFromAtl && !cli.flags.migrateSkillDir) {
+      const home = homedir()
+      const atlDir = path.join(home, '.javidots', 'agent-teams-lite')
+      const legacySkillDir = path.join(home, '.config', 'opencode', 'skill')
+
+      if (existsSync(atlDir)) {
+        const shouldMigrateAtl = await promptYesNo(
+          'Legacy ~/.javidots/agent-teams-lite/ detected. Migrate to gentle-ai now?'
+        )
+        if (shouldMigrateAtl) {
+          const { migrateFromAtl } = await import('./orchestrator/migration.js')
+          await migrateFromAtl(cli.flags.dryRun, () => {})
+        }
+      }
+
+      if (existsSync(legacySkillDir)) {
+        const shouldMigrateSkillDir = await promptYesNo(
+          'Legacy ~/.config/opencode/skill/ detected. Migrate to ~/.config/opencode/skills/ now?'
+        )
+        if (shouldMigrateSkillDir) {
+          const { migrateSkillDir } = await import('./orchestrator/migration.js')
+          await migrateSkillDir(cli.flags.dryRun, () => {})
+        }
+      }
+    }
+
     // Determine CLIs from --cli flag or --preset
     let preselectedClis: AI_CLI[] | undefined
     let presetGhagga: boolean | undefined

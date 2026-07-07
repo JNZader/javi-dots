@@ -1,9 +1,13 @@
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import type { SetupOptions, SetupStep, Manifest } from '../types/index.js'
-import { MANIFEST_DIR, MANIFEST_PATH } from '../constants.js'
+import { MANIFEST_DIR, MANIFEST_PATH, CLAUDE_MD_PATH } from '../constants.js'
+import { ensureBrewTrust } from './brew-trust.js'
+import { writeSnapshot } from './backup.js'
+import { registerEngramMcpForCli } from './mcp.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -30,7 +34,7 @@ function javiAiAssetTargets(homeDir: string): JaviAiAssetTarget[] {
       cli: 'opencode',
       label: 'OpenCode skills/config',
       paths: [
-        path.join(homeDir, '.config', 'opencode', 'skill'),
+        path.join(homeDir, '.config', 'opencode', 'skills'),
         path.join(homeDir, '.config', 'opencode', 'opencode.json'),
       ],
     },
@@ -124,7 +128,7 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
   report(onStep, 'javi-ai', 'Install AI framework (javi-ai)', 'running')
   try {
     if (!dryRun) {
-      await execFileAsync('npx', ['javi-ai', 'install', '--cli', cliList], {
+      await execFileAsync('npx', ['-y', 'javi-ai@latest', 'install', '--cli', cliList], {
         timeout: 120000,
         env: { ...process.env, FORCE_COLOR: '0' },
       })
@@ -138,52 +142,83 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     const detail = msg.includes('assets are incomplete')
-      ? `${msg}. Run: npm install -g javi-ai && javi-ai install --cli ${cliList}`
-      : `Failed. Run: npm install -g javi-ai && javi-ai install --cli ${cliList}`
+      ? `${msg}. Run: npm install -g javi-ai@latest && javi-ai install --cli ${cliList}`
+      : `Failed. Run: npm install -g javi-ai@latest && javi-ai install --cli ${cliList}`
     report(onStep, 'javi-ai', 'Install AI framework (javi-ai)', 'error', detail)
   }
 
-  // Step 2: Install agent-teams-lite (SDD) — MANDATORY
-  report(onStep, 'sdd', 'Install SDD framework (agent-teams-lite)', 'running')
+  // Brew tap-trust preflight: gentle-ai + engram must be trusted before
+  // `brew install` from non-official taps. Homebrew 6 refuses to install
+  // from untrusted taps. See spec "Brew Tap-Trust Preflight" scenario
+  // "Fresh Homebrew 6 install on Linux/macOS".
+  const brewExists = await commandExists('brew')
+  if (brewExists && !dryRun) {
+    await ensureBrewTrust([
+      'gentleman-programming/tap/gentle-ai',
+      'gentleman-programming/tap/engram',
+    ])
+  }
+
+  // Backup snapshot of managed config files BEFORE gentle-ai install may
+  // modify them. Even though we pass --persona custom (which preserves
+  // user persona/prompt blocks), gentle-ai may still touch opencode.json
+  // and ~/.claude/CLAUDE.md for managed components. See spec
+  // "Backup Snapshot Before Managed Writes".
+  const managedPathsForBackup = [
+    CLAUDE_MD_PATH,
+    path.join(os.homedir(), '.config', 'opencode', 'opencode.json'),
+    path.join(os.homedir(), '.claude', 'settings.json'),
+    path.join(os.homedir(), '.claude.json'),
+  ].filter((p) => fs.existsSync(p))
+  let activeBackupId: string | undefined
+  if (!dryRun && managedPathsForBackup.length > 0 && brewExists) {
+    const backupsDir = path.join(MANIFEST_DIR, 'backups')
+    const snap = await writeSnapshot(managedPathsForBackup, backupsDir)
+    if (!snap.skipped && snap.manifest) {
+      activeBackupId = snap.manifest.id
+    }
+  }
+
+  // Step 2: Install gentle-ai ecosystem (modern SDD provider)
+  // The CLI list map uses gentle-ai's agent name conventions; gentle-ai
+  // runs non-interactively because we pass --agent, --preset, --persona
+  // explicitly AND set GENTLE_AI_YES=1 to auto-accept any self-update prompt.
+  report(onStep, 'gentle-ai', 'Install Gentle-AI ecosystem (gentle-ai)', 'running')
   try {
-    const gitExists = await commandExists('git')
-    if (!gitExists) throw new Error('git not found — required to clone agent-teams-lite')
+    const gentleAiExists = await commandExists('gentle-ai')
+
+    if (!gentleAiExists && !dryRun) {
+      if (brewExists) {
+        await execFileAsync('brew', ['install', 'gentleman-programming/tap/gentle-ai'], { timeout: 120000 })
+      } else {
+        throw new Error('gentle-ai not found and brew not available. Install manually: https://github.com/Gentleman-Programming/gentle-ai')
+      }
+    }
 
     if (!dryRun) {
-      const atlDir = path.join(MANIFEST_DIR, 'agent-teams-lite')
-      // Clone or pull
-      if (fs.existsSync(atlDir)) {
-        await execFileAsync('git', ['-C', atlDir, 'pull', '--ff-only'], { timeout: 30000 })
-      } else {
-        fs.mkdirSync(MANIFEST_DIR, { recursive: true })
-        await execFileAsync('git', ['clone', '--depth', '1',
-          'https://github.com/Gentleman-Programming/agent-teams-lite.git', atlDir],
-          { timeout: 60000 })
-      }
-      // Run install for each CLI
-      // ATL uses different agent names than javi-dots CLI ids
-      const ATL_AGENT_MAP: Record<string, string> = {
+      // javi-dots short CLI ids → gentle-ai agent names
+      const GENTLE_AI_AGENT_MAP: Record<string, string> = {
         claude: 'claude-code',
         opencode: 'opencode',
         gemini: 'gemini-cli',
+        qwen: 'qwen',
         codex: 'codex',
+        copilot: 'copilot',
       }
-      const setupScript = path.join(atlDir, 'scripts', 'setup.sh')
-      if (fs.existsSync(setupScript)) {
-        for (const cli of clis) {
-          const atlAgent = ATL_AGENT_MAP[cli]
-          if (!atlAgent) continue // skip CLIs not supported by ATL (qwen, copilot)
-          await execFileAsync('bash', [setupScript, '--agent', atlAgent], {
-            timeout: 30000,
-            cwd: atlDir,
-          })
-        }
-      }
+      const agentList = clis.map((c) => GENTLE_AI_AGENT_MAP[c] ?? c).join(',')
+      await execFileAsync(
+        'gentle-ai',
+        ['install', '--agent', agentList, '--preset', 'full-gentleman', '--persona', 'custom'],
+        {
+          timeout: 120000,
+          env: { ...process.env, GENTLE_AI_YES: '1', FORCE_COLOR: '0' },
+        },
+      )
     }
-    report(onStep, 'sdd', 'Install SDD framework (agent-teams-lite)', 'done', `CLIs: ${cliList}`)
+    report(onStep, 'gentle-ai', 'Install Gentle-AI ecosystem (gentle-ai)', 'done', `CLIs: ${cliList}`)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
-    report(onStep, 'sdd', 'Install SDD framework (agent-teams-lite)', 'error', msg)
+    report(onStep, 'gentle-ai', 'Install Gentle-AI ecosystem (gentle-ai)', 'error', msg)
   }
 
   // Step 3: Install engram — MANDATORY
@@ -192,8 +227,6 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     const engramExists = await commandExists('engram')
 
     if (!engramExists && !dryRun) {
-      // Try brew install
-      const brewExists = await commandExists('brew')
       if (brewExists) {
         await execFileAsync('brew', ['install', 'gentleman-programming/tap/engram'], { timeout: 120000 })
       } else {
@@ -202,14 +235,12 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
     }
 
     if (!dryRun) {
-      // Configure for each CLI
+      // Register engram as local MCP server in each CLI's MCP config.
+      // The brew binary source-of-truth; we do NOT swallow errors here (per
+      // spec "engram Lifecycle Replaces engram setup <cli>" — the prior
+      // catch-and-swallow was a hidden bug that masked missing subcommands).
       for (const cli of clis) {
-        const cliName = cli === 'claude' ? 'claude-code' : cli
-        try {
-          await execFileAsync('engram', ['setup', cliName], { timeout: 15000 })
-        } catch {
-          // Some CLIs may not have engram setup — not fatal
-        }
+        await registerEngramMcpForCli(cli as SetupOptions['clis'][number])
       }
     }
     report(onStep, 'engram', 'Install persistent memory (engram)', 'done')
@@ -265,8 +296,12 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
 
     if (!rtkExists && !dryRun) {
       // Try brew first, fall back to cargo
-      const brewExists = await commandExists('brew')
-      if (brewExists) {
+      const brewAvailable = await commandExists('brew')
+      if (brewAvailable) {
+        // Ensure rtk-ai tap is trusted before invoking brew install — same
+        // preflight pattern used for gentle-ai/engram. Without trust Homebrew
+        // 6 refuses with "Refusing to load formula from untrusted tap".
+        await ensureBrewTrust(['rtk-ai/tap/rtk'])
         try {
           await execFileAsync('brew', ['install', 'rtk-ai/tap/rtk'], { timeout: 120000 })
         } catch {
@@ -317,21 +352,29 @@ export async function runSetup(options: SetupOptions, onStep: StepCallback): Pro
 
   // Step 9: Write manifest
   writeManifest(clis, ghagga, kiteguard, dryRun)
+  writeManifest(clis, ghagga, kiteguard, dryRun, activeBackupId)
   report(onStep, 'manifest', 'Save configuration', 'done')
 }
 
-function writeManifest(clis: SetupOptions['clis'], ghagga: boolean, kiteguard: boolean, dryRun: boolean): void {
+function writeManifest(
+  clis: SetupOptions['clis'],
+  ghagga: boolean,
+  kiteguard: boolean,
+  dryRun: boolean,
+  backupRef?: string,
+): void {
   if (!dryRun) {
     const manifest: Manifest = {
-      version: '0.1.0',
+      version: '0.2.0',
       installedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       clis,
       engram: true,
-      sdd: true,
+      sdd: true, // provider gentle-ai (not ATL) — see openspec/changes/gentle-ai-migration
       ghagga,
       kiteguard,
       rtk: true,
+      backupRef,
     }
     fs.mkdirSync(MANIFEST_DIR, { recursive: true })
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2))

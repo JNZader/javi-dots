@@ -22,7 +22,6 @@ vi.mock('../constants.js', async (importOriginal) => {
     REPLICATION_PROFILE_PATH: FIXED_PROFILE,
     DEFAULT_MCP_SERVERS: [
       { name: 'engram', npmPackage: 'engram', command: 'engram', args: ['mcp'] },
-      { name: 'filesystem', npmPackage: 'filesystem', command: 'npx', args: ['filesystem'] },
     ],
   }
 })
@@ -54,13 +53,13 @@ describe('portable replication profile', () => {
     expect(profile.features).toContain('skills')
     expect(profile.features).toContain('configs')
     expect(profile.tools).toContain('engram')
-    expect(profile.tools).toContain('agent-teams-lite')
-    expect(profile.mcpServers).toEqual(['engram', 'filesystem'])
+    expect(profile.tools).toContain('gentle-ai')
+    expect(profile.mcpServers).toEqual(['engram'])
   })
 
   it('derives CLIs and optional tools from javi-dots manifest', () => {
     fs.writeFileSync(FIXED_MANIFEST, JSON.stringify({
-      version: '0.1.0',
+      version: '0.2.0',
       installedAt: '2026-05-16T00:00:00.000Z',
       updatedAt: '2026-05-16T00:00:00.000Z',
       clis: ['claude', 'opencode', 'codex'],

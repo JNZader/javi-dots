@@ -58,13 +58,15 @@ function whichReturnsPaddedPath(bin: string, paddedPath: string) {
 }
 
 const validManifest: Manifest = {
-  version: '0.1.0',
+  version: '0.2.0',
   installedAt: '2025-01-01T00:00:00.000Z',
   updatedAt: '2025-01-01T00:00:00.000Z',
   clis: ['claude', 'opencode'],
   engram: true,
   sdd: true,
   ghagga: false,
+  kiteguard: false,
+  rtk: true,
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -77,7 +79,7 @@ describe('runDoctor', () => {
   // ── Manifest checks ──────────────────────────────────────────────────────
   it('manifest exists and valid: ok with installedAt', async () => {
     ;(fs.readFileSync as Mock).mockReturnValue(JSON.stringify(validManifest))
-    whichRouted({ 'javi-ai': '/usr/bin/javi-ai', engram: '/usr/bin/engram', git: '/usr/bin/git', ghagga: null })
+    whichRouted({ 'javi-ai': '/usr/bin/javi-ai', 'gentle-ai': '/usr/bin/gentle-ai', engram: '/usr/bin/engram', git: '/usr/bin/git', ghagga: null })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
     const { checks, manifest } = await runDoctor()
@@ -94,7 +96,7 @@ describe('runDoctor', () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
     const { checks, manifest } = await runDoctor()
@@ -107,7 +109,7 @@ describe('runDoctor', () => {
 
   it('manifest invalid JSON: fail', async () => {
     ;(fs.readFileSync as Mock).mockReturnValue('not valid json {{{')
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
     const { checks, manifest } = await runDoctor()
@@ -121,7 +123,7 @@ describe('runDoctor', () => {
   // ── Binary checks ────────────────────────────────────────────────────────
   it('javi-ai found: ok', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': '/usr/local/bin/javi-ai', engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': '/usr/local/bin/javi-ai', 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'javi-ai')
@@ -131,7 +133,7 @@ describe('runDoctor', () => {
 
   it('javi-ai not found: fail', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'javi-ai')
@@ -141,7 +143,7 @@ describe('runDoctor', () => {
 
   it('engram found: ok', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: '/usr/local/bin/engram', git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: '/usr/local/bin/engram', git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'engram')
@@ -151,7 +153,7 @@ describe('runDoctor', () => {
 
   it('engram not found: fail', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'engram')
@@ -161,7 +163,7 @@ describe('runDoctor', () => {
 
   it('git found: ok', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: '/usr/bin/git', ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: '/usr/bin/git', ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'git')
@@ -171,41 +173,41 @@ describe('runDoctor', () => {
 
   it('git not found: fail', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'git')
     expect(check!.status).toBe('fail')
-    expect(check!.detail).toContain('SDD')
+    expect(check!.detail).toContain('git operations')
   })
 
-  // ── agent-teams-lite dir ─────────────────────────────────────────────────
-  it('ATL dir exists: ok', async () => {
+  // ── gentle-ai binary (replaces ATL dir check) ────────────────────────────
+  it('gentle-ai found: ok', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
-    ;(fs.existsSync as Mock).mockReturnValue(true)
+    whichRouted({ 'javi-ai': null, 'gentle-ai': '/usr/local/bin/gentle-ai', engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
-    const check = checks.find((c) => c.name === 'agent-teams-lite')
+    const check = checks.find((c) => c.name === 'gentle-ai')
     expect(check!.status).toBe('ok')
-    expect(check!.detail).toContain('agent-teams-lite')
+    expect(check!.detail).toBe('/usr/local/bin/gentle-ai')
   })
 
-  it('ATL dir absent: fail', async () => {
+  it('gentle-ai not found: fail with brew trust/install hint', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
     ;(fs.existsSync as Mock).mockReturnValue(false)
 
     const { checks } = await runDoctor()
-    const check = checks.find((c) => c.name === 'agent-teams-lite')
+    const check = checks.find((c) => c.name === 'gentle-ai')
     expect(check!.status).toBe('fail')
-    expect(check!.detail).toContain('npx javidots')
+    expect(check!.detail).toContain('brew trust --formula gentleman-programming/tap/gentle-ai')
+    expect(check!.detail).toContain('brew install gentleman-programming/tap/gentle-ai')
   })
 
   // ── ghagga ────────────────────────────────────────────────────────────────
   it('ghagga not found: skip (NOT fail)', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
     const check = checks.find((c) => c.name === 'ghagga')
@@ -221,6 +223,7 @@ describe('runDoctor', () => {
     ;(fs.readFileSync as Mock).mockReturnValue(JSON.stringify(validManifest))
     whichRouted({
       'javi-ai': '/usr/bin/javi-ai',
+      'gentle-ai': '/usr/bin/gentle-ai',
       engram: '/usr/bin/engram',
       git: '/usr/bin/git',
       ghagga: null,
@@ -248,7 +251,7 @@ describe('runDoctor', () => {
 
   it('null manifest: no dynamic CLI checks', async () => {
     ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
-    whichRouted({ 'javi-ai': null, engram: null, git: null, ghagga: null })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
 
     const { checks } = await runDoctor()
 
@@ -259,9 +262,9 @@ describe('runDoctor', () => {
     const names = checks.map((c) => c.name)
     expect(names).toContain('javidots manifest')
     expect(names).toContain('javi-ai')
+    expect(names).toContain('gentle-ai')
     expect(names).toContain('engram')
     expect(names).toContain('git')
-    expect(names).toContain('agent-teams-lite')
     expect(names).toContain('ghagga')
   })
 })
