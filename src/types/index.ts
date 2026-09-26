@@ -59,6 +59,7 @@ export type PortableReplicationTool =
   | 'engram'
   | 'agent-teams-lite'
   | 'gentle-ai'
+  | 'openspec'
   | 'ghagga'
   | 'kiteguard'
   | 'rtk'

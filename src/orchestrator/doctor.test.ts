@@ -263,8 +263,29 @@ describe('runDoctor', () => {
     expect(names).toContain('javidots manifest')
     expect(names).toContain('javi-ai')
     expect(names).toContain('gentle-ai')
+    expect(names).toContain('openspec')
     expect(names).toContain('engram')
     expect(names).toContain('git')
     expect(names).toContain('ghagga')
+  })
+
+  it('openspec found: ok', async () => {
+    ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, openspec: '/usr/local/bin/openspec', engram: null, git: null, ghagga: null })
+
+    const { checks } = await runDoctor()
+    const check = checks.find((c) => c.name === 'openspec')
+    expect(check!.status).toBe('ok')
+    expect(check!.detail).toBe('/usr/local/bin/openspec')
+  })
+
+  it('openspec not found: fail with pinned npm install hint', async () => {
+    ;(fs.readFileSync as Mock).mockImplementation(() => { throw new Error('ENOENT') })
+    whichRouted({ 'javi-ai': null, 'gentle-ai': null, engram: null, git: null, ghagga: null })
+
+    const { checks } = await runDoctor()
+    const check = checks.find((c) => c.name === 'openspec')
+    expect(check!.status).toBe('fail')
+    expect(check!.detail).toContain('npm install -g @fission-ai/openspec@1.13.2')
   })
 })

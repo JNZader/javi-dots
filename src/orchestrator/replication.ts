@@ -28,6 +28,7 @@ export const PORTABLE_FEATURES: PortableReplicationFeature[] = [
 export const DEFAULT_PORTABLE_TOOLS: PortableReplicationTool[] = [
   'engram',
   'gentle-ai',
+  'openspec',
 ]
 
 const SENSITIVE_PATH_SEGMENTS = [
