@@ -50,6 +50,16 @@ export async function runDoctor(): Promise<{
         detail: 'gentle-ai not found. Run: brew trust --formula gentleman-programming/tap/gentle-ai && brew install gentleman-programming/tap/gentle-ai',
       })
 
+  // Check openspec (Specified width / OPSX — ADR-014)
+  const openspecPath = await which('openspec')
+  checks.push(openspecPath
+    ? { name: 'openspec', status: 'ok', detail: openspecPath }
+    : {
+        name: 'openspec',
+        status: 'fail',
+        detail: 'openspec not found. Run: npm install -g @fission-ai/openspec@1.13.2',
+      })
+
   // Check rtk (optional — token compression)
   const rtkPath = await which('rtk')
   checks.push(rtkPath

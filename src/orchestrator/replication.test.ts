@@ -54,6 +54,7 @@ describe('portable replication profile', () => {
     expect(profile.features).toContain('configs')
     expect(profile.tools).toContain('engram')
     expect(profile.tools).toContain('gentle-ai')
+    expect(profile.tools).toContain('openspec')
     expect(profile.mcpServers).toEqual(['engram'])
   })
 
